@@ -1,20 +1,27 @@
 {
   "expo": {
     "name": "Enviroscan",
-    "slug": "meshcore-mobile",
+    "slug": "enviroscan",
+    "owner": "willbullen",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "manus20251226202925",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "e8eec2ce-70f8-49e7-bf01-2360cef376d6"
+      }
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "space.manus.meshcore.mobile.t20251226202925",
+      "bundleIdentifier": "com.willbullen.enviroscan",
       "infoPlist": {
         "UIBackgroundModes": ["audio", "bluetooth-central"],
         "NSBluetoothAlwaysUsageDescription": "Enviroscan needs Bluetooth to connect to mesh network devices.",
-        "NSBluetoothPeripheralUsageDescription": "Enviroscan needs Bluetooth to connect to mesh network devices."
+        "NSBluetoothPeripheralUsageDescription": "Enviroscan needs Bluetooth to connect to mesh network devices.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,7 +33,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "space.manus.meshcore.mobile.t20251226202925",
+      "package": "com.willbullen.enviroscan",
       "permissions": [
         "POST_NOTIFICATIONS",
         "BLUETOOTH",

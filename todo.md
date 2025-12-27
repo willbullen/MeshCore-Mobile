@@ -251,3 +251,11 @@
 - [x] Keep app.config.ts for development flexibility
 - [x] Fix remaining branding issues in app.config.ts
 - [ ] Test that both files work together
+
+## Fix Expo Launch Configuration
+- [x] Add EAS project ID to app.json
+- [x] Update slug to 'enviroscan' (from 'meshcore-mobile')
+- [x] Update iOS bundle identifier to 'com.willbullen.enviroscan'
+- [x] Update Android package to 'com.willbullen.enviroscan'
+- [x] Rename app.config.ts to .backup to avoid conflicts with Expo Launch
+- [ ] Test Expo Launch build process
