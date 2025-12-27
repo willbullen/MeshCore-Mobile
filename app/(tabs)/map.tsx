@@ -4,9 +4,9 @@ import {
   StyleSheet,
   View,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GoogleMaps, AppleMaps } from "expo-maps";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/themed-text";
@@ -20,8 +20,26 @@ import {
   type Node,
 } from "@/constants/mock-data";
 
-// Use platform-specific map component
-const MapView = Platform.OS === "ios" ? AppleMaps.View : GoogleMaps.View;
+// Try to import expo-maps, fall back to null if not available
+let GoogleMaps: any = null;
+let AppleMaps: any = null;
+let MAPS_AVAILABLE = false;
+
+try {
+  const maps = require("expo-maps");
+  GoogleMaps = maps.GoogleMaps;
+  AppleMaps = maps.AppleMaps;
+  MAPS_AVAILABLE = true;
+} catch (error) {
+  console.warn("[Maps] expo-maps not available. Showing fallback UI.");
+}
+
+// Use platform-specific map component if available
+const MapView = MAPS_AVAILABLE
+  ? Platform.OS === "ios"
+    ? AppleMaps?.View
+    : GoogleMaps?.View
+  : null;
 
 export default function MapScreen() {
   const colorScheme = useColorScheme();
@@ -66,6 +84,91 @@ export default function MapScreen() {
     color: node.isOnline ? "#22c55e" : "#64748b",
   }));
 
+  // Fallback UI when maps are not available
+  if (!MAPS_AVAILABLE || !MapView) {
+    return (
+      <ThemedView style={styles.container}>
+        <ConnectionStatusBanner />
+        {/* Header */}
+        <View
+          style={[
+            styles.header,
+            {
+              paddingTop: Math.max(insets.top, 20),
+              backgroundColor: colors.background,
+              borderBottomColor: colors.border,
+            },
+          ]}
+        >
+          <ThemedText type="title">Map</ThemedText>
+          <ThemedText style={[styles.nodeCount, { color: colors.success }]}>
+            {nodesWithLocation.length} nodes
+          </ThemedText>
+        </View>
+
+        {/* Fallback Content */}
+        <ScrollView
+          style={styles.fallbackContainer}
+          contentContainerStyle={styles.fallbackContent}
+        >
+          <View style={styles.fallbackMessage}>
+            <IconSymbol name="map.fill" size={64} color={colors.textSecondary} />
+            <ThemedText type="subtitle" style={{ textAlign: "center", marginTop: Spacing.md }}>
+              Map requires development build
+            </ThemedText>
+            <ThemedText
+              style={[
+                styles.fallbackText,
+                { color: colors.textSecondary, textAlign: "center" },
+              ]}
+            >
+              expo-maps requires native modules that aren't available in Expo Go. To use the map
+              feature, create a development build.
+            </ThemedText>
+            <Pressable
+              style={[styles.fallbackButton, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                // Open Expo docs
+                console.log("Open development build docs");
+              }}
+            >
+              <ThemedText style={styles.fallbackButtonText}>
+                Learn about development builds
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          {/* Show node list as fallback */}
+          <View style={styles.nodeList}>
+            <ThemedText type="subtitle" style={{ marginBottom: Spacing.md }}>
+              Nodes with Location
+            </ThemedText>
+            {nodesWithLocation.map((node) => (
+              <View
+                key={node.nodeHash}
+                style={[styles.nodeItem, { backgroundColor: colors.surface }]}
+              >
+                <View style={styles.nodeItemHeader}>
+                  <ThemedText type="defaultSemiBold">{node.name}</ThemedText>
+                  <View
+                    style={[
+                      styles.statusDot,
+                      { backgroundColor: node.isOnline ? colors.success : colors.textDisabled },
+                    ]}
+                  />
+                </View>
+                <ThemedText style={[styles.coordinates, { color: colors.textSecondary }]}>
+                  {node.latitude?.toFixed(6)}, {node.longitude?.toFixed(6)}
+                </ThemedText>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </ThemedView>
+    );
+  }
+
+  // Normal map UI when maps are available
   return (
     <ThemedView style={styles.container}>
       <ConnectionStatusBanner />
@@ -190,6 +293,55 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   legendText: {
+    fontSize: 13,
+  },
+  fallbackContainer: {
+    flex: 1,
+  },
+  fallbackContent: {
+    padding: Spacing.lg,
+  },
+  fallbackMessage: {
+    alignItems: "center",
+    paddingVertical: Spacing.xxxl,
+  },
+  fallbackText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: Spacing.sm,
+    maxWidth: 300,
+  },
+  fallbackButton: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.sm,
+  },
+  fallbackButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  nodeList: {
+    marginTop: Spacing.lg,
+  },
+  nodeItem: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
+  },
+  nodeItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.xs,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  coordinates: {
     fontSize: 13,
   },
 });

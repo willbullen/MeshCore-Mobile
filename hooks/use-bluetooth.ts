@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { State } from "react-native-ble-plx";
-import { bleService, type BLEDevice } from "@/lib/ble-service";
+import { bleService, State, type BLEDevice } from "@/lib/ble-service";
 import { meshProtocol, type MeshPacket } from "@/lib/meshcore-protocol";
 
 export interface BluetoothState {
@@ -8,7 +7,7 @@ export interface BluetoothState {
   isConnected: boolean;
   connectedDevice: BLEDevice | null;
   discoveredDevices: BLEDevice[];
-  bleState: State;
+  bleState: any; // BLE State enum
   error: string | null;
 }
 
@@ -23,13 +22,16 @@ export interface BluetoothActions {
 }
 
 export function useBluetooth(): [BluetoothState, BluetoothActions] {
+  // Check if BLE is available
+  const bleAvailable = bleService.isAvailable();
+  
   const [state, setState] = useState<BluetoothState>({
     isScanning: false,
     isConnected: false,
     connectedDevice: null,
     discoveredDevices: [],
-    bleState: State.Unknown,
-    error: null,
+    bleState: bleAvailable ? State.Unknown : State.Unsupported,
+    error: bleAvailable ? null : "BLE requires development build",
   });
 
   const [messageCallbacks, setMessageCallbacks] = useState<Array<(packet: MeshPacket) => void>>(
@@ -74,6 +76,12 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
 
   // Start scanning for devices
   const startScan = useCallback(async () => {
+    if (!bleAvailable) {
+      console.warn("[useBluetooth] BLE not available");
+      setState((prev) => ({ ...prev, error: "BLE requires development build" }));
+      return;
+    }
+    
     try {
       setState((prev) => ({ ...prev, isScanning: true, error: null, discoveredDevices: [] }));
 
@@ -116,6 +124,10 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
 
   // Connect to a device
   const connect = useCallback(async (deviceId: string) => {
+    if (!bleAvailable) {
+      throw new Error("BLE not available - requires development build");
+    }
+    
     try {
       setState((prev) => ({ ...prev, error: null }));
 
@@ -166,6 +178,10 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
   // Send a text message
   const sendMessage = useCallback(
     async (to: string, text: string, channel: number = 0) => {
+      if (!bleAvailable) {
+        throw new Error("BLE not available - requires development build");
+      }
+      
       try {
         if (!state.isConnected || !state.connectedDevice) {
           throw new Error("Not connected to a device");

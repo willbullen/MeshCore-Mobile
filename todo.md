@@ -158,3 +158,11 @@
 - [x] Create GitHub repository MeshCore-Mobile
 - [x] Push initial code to GitHub
 - [x] Configure repository settings
+
+## Critical Bug Fixes
+- [x] Fix BLEManager native module error - make BLE optional
+- [x] Fix ExpoMaps native module error - add fallback UI
+- [x] Update useBluetooth hook to handle missing BLE gracefully
+- [x] Update Connect tab to show "requires dev build" message
+- [x] Update Map tab to show fallback when maps unavailable
+- [x] Test app runs without errors in Expo Go

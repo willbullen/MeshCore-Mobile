@@ -1,10 +1,37 @@
-import { BleManager, Device, State, Subscription } from "react-native-ble-plx";
 import { Platform, PermissionsAndroid } from "react-native";
+
+// Dynamically import BLE to handle missing native module gracefully
+let BleManager: any;
+let State: any;
+let BLE_AVAILABLE = false;
+
+try {
+  const ble = require("react-native-ble-plx");
+  BleManager = ble.BleManager;
+  State = ble.State;
+  BLE_AVAILABLE = true;
+} catch (error) {
+  console.warn("[BLE] react-native-ble-plx not available. BLE features disabled.");
+  // Mock State enum for when BLE is not available
+  State = {
+    Unknown: "Unknown",
+    Resetting: "Resetting",
+    Unsupported: "Unsupported",
+    Unauthorized: "Unauthorized",
+    PoweredOff: "PoweredOff",
+    PoweredOn: "PoweredOn",
+  };
+}
+
+type Device = any;
+type Subscription = any;
 
 // MeshCore BLE Service UUIDs (adjust these to match your RAK4631 configuration)
 const MESHCORE_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"; // Nordic UART Service
 const TX_CHARACTERISTIC_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"; // Write
 const RX_CHARACTERISTIC_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"; // Notify
+
+export { State };
 
 export interface BLEDevice {
   id: string;
@@ -12,13 +39,13 @@ export interface BLEDevice {
   rssi: number;
 }
 
-export type BLEStateCallback = (state: State) => void;
+export type BLEStateCallback = (state: any) => void;
 export type DeviceDiscoveredCallback = (device: BLEDevice) => void;
 export type DataReceivedCallback = (data: string) => void;
 export type ConnectionStateCallback = (connected: boolean) => void;
 
 class BLEService {
-  private manager: BleManager;
+  private manager: any = null;
   private connectedDevice: Device | null = null;
   private scanSubscription: Subscription | null = null;
   private notificationSubscription: Subscription | null = null;
@@ -28,12 +55,27 @@ class BLEService {
   private connectionCallbacks: ConnectionStateCallback[] = [];
 
   constructor() {
-    this.manager = new BleManager();
-    this.setupStateListener();
+    if (!BLE_AVAILABLE || !BleManager) {
+      console.warn("[BLE] BleManager not available, BLE features disabled");
+      return;
+    }
+
+    try {
+      this.manager = new BleManager();
+      this.setupStateListener();
+    } catch (error) {
+      console.error("[BLE] Failed to initialize BleManager:", error);
+    }
+  }
+
+  isAvailable(): boolean {
+    return BLE_AVAILABLE && this.manager !== null;
   }
 
   private setupStateListener() {
-    this.manager.onStateChange((state) => {
+    if (!this.manager) return;
+    
+    this.manager.onStateChange((state: any) => {
       console.log("[BLE] State changed:", state);
       this.stateCallbacks.forEach((cb) => cb(state));
     }, true);
@@ -41,6 +83,11 @@ class BLEService {
 
   // Permission handling
   async requestPermissions(): Promise<boolean> {
+    if (!this.isAvailable()) {
+      console.warn("[BLE] BLE not available, cannot request permissions");
+      return false;
+    }
+
     if (Platform.OS === "android") {
       if (Platform.Version >= 31) {
         // Android 12+
@@ -69,7 +116,10 @@ class BLEService {
   }
 
   // State management
-  async getState(): Promise<State> {
+  async getState(): Promise<any> {
+    if (!this.manager) {
+      return State.Unsupported;
+    }
     return await this.manager.state();
   }
 
@@ -84,6 +134,10 @@ class BLEService {
 
   // Device scanning
   async startScan(onDeviceDiscovered: DeviceDiscoveredCallback): Promise<void> {
+    if (!this.isAvailable()) {
+      throw new Error("BLE not available - requires development build");
+    }
+
     console.log("[BLE] Starting scan...");
     
     // Request permissions first
@@ -102,10 +156,10 @@ class BLEService {
 
     this.deviceCallbacks.push(onDeviceDiscovered);
 
-    this.scanSubscription = (this.manager.startDeviceScan(
+    this.scanSubscription = this.manager.startDeviceScan(
       null, // Scan for all devices
       { allowDuplicates: false },
-      (error, device) => {
+      (error: any, device: any) => {
         if (error) {
           console.error("[BLE] Scan error:", error);
           return;
@@ -128,10 +182,12 @@ class BLEService {
           }
         }
       }
-    ) as any);
+    );
   }
 
   stopScan() {
+    if (!this.manager) return;
+    
     console.log("[BLE] Stopping scan...");
     if (this.scanSubscription) {
       this.scanSubscription.remove();
@@ -143,6 +199,10 @@ class BLEService {
 
   // Connection management
   async connect(deviceId: string, onConnectionStateChange: ConnectionStateCallback) {
+    if (!this.isAvailable()) {
+      throw new Error("BLE not available - requires development build");
+    }
+
     console.log("[BLE] Connecting to device:", deviceId);
     
     try {
@@ -180,6 +240,8 @@ class BLEService {
   }
 
   async disconnect() {
+    if (!this.manager) return;
+    
     console.log("[BLE] Disconnecting...");
     
     if (this.notificationSubscription) {
@@ -220,7 +282,7 @@ class BLEService {
     this.notificationSubscription = this.connectedDevice.monitorCharacteristicForService(
       MESHCORE_SERVICE_UUID,
       RX_CHARACTERISTIC_UUID,
-      (error, characteristic) => {
+      (error: any, characteristic: any) => {
         if (error) {
           console.error("[BLE] Notification error:", error);
           return;
@@ -246,6 +308,10 @@ class BLEService {
   }
 
   async sendData(data: string): Promise<void> {
+    if (!this.isAvailable()) {
+      throw new Error("BLE not available - requires development build");
+    }
+
     if (!this.connectedDevice) {
       throw new Error("No device connected");
     }
@@ -270,6 +336,8 @@ class BLEService {
 
   // Cleanup
   destroy() {
+    if (!this.manager) return;
+    
     console.log("[BLE] Destroying BLE service...");
     this.stopScan();
     this.disconnect();

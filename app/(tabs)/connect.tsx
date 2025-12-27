@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { State } from "react-native-ble-plx";
+import { State } from "@/lib/ble-service";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/themed-text";
@@ -26,6 +26,7 @@ export default function ConnectScreen() {
   const insets = useSafeAreaInsets();
   
   const [bluetoothState, bluetoothActions] = useBluetooth();
+  const bleAvailable = bluetoothState.bleState !== State.Unsupported;
   
   // Settings state
   const [nodeName, setNodeName] = useState("Base Station");
@@ -88,7 +89,7 @@ export default function ConnectScreen() {
     return "Fair";
   };
 
-  const getBleStateText = (state: State) => {
+  const getBleStateText = (state: any) => {
     switch (state) {
       case State.PoweredOn:
         return "Ready";
@@ -122,6 +123,26 @@ export default function ConnectScreen() {
             {getBleStateText(bluetoothState.bleState)}
           </ThemedText>
         </View>
+
+        {/* BLE Unavailable Warning */}
+        {!bleAvailable && (
+          <View style={styles.section}>
+            <View style={[styles.statusCard, { backgroundColor: colors.error + "20", borderWidth: 1, borderColor: colors.error }]}>
+              <View style={styles.statusHeader}>
+                <IconSymbol name="exclamationmark.triangle.fill" size={24} color={colors.error} />
+                <ThemedText type="defaultSemiBold" style={{ color: colors.error }}>
+                  Development Build Required
+                </ThemedText>
+              </View>
+              <ThemedText style={[styles.statusDescription, { color: colors.text }]}>
+                Bluetooth features require a development build. Expo Go doesn't support native BLE modules.
+              </ThemedText>
+              <ThemedText style={[styles.statusDescription, { color: colors.textSecondary, fontSize: 13 }]}>
+                Run: npx expo run:ios or npx expo run:android
+              </ThemedText>
+            </View>
+          </View>
+        )}
 
         {/* Connection Status Card */}
         <View style={styles.section}>
