@@ -18,6 +18,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/manus-runtime";
 import { IntroScreen } from "@/components/intro-screen";
+import { BiometricLogin } from "@/components/biometric-login";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -37,6 +38,8 @@ export default function RootLayout() {
   const [frame, setFrame] = useState<Rect>(initialFrame);
   const [showIntro, setShowIntro] = useState(true);
   const [introChecked, setIntroChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
@@ -61,6 +64,23 @@ export default function RootLayout() {
     };
     
     checkFirstLaunch();
+  }, []);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authStatus = await AsyncStorage.getItem("@meshcore_authenticated");
+        setIsAuthenticated(authStatus === "true");
+      } catch (error) {
+        console.error("Failed to check auth status:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+    
+    checkAuth();
   }, []);
 
   const handleIntroFinish = async () => {
@@ -104,9 +124,18 @@ export default function RootLayout() {
     [initialFrame, initialInsets],
   );
 
-  // Don't render content until intro check is complete
-  if (!introChecked) {
+  // Don't render content until intro and auth checks are complete
+  if (!introChecked || !authChecked) {
     return null;
+  }
+
+  // Show biometric login if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaProvider initialMetrics={providerInitialMetrics}>
+        <BiometricLogin onAuthenticated={() => setIsAuthenticated(true)} />
+      </SafeAreaProvider>
+    );
   }
 
   const content = (

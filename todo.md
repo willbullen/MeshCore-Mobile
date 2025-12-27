@@ -215,3 +215,14 @@
 - [x] Add quick action buttons (Send Message, Scan Devices, View Map)
 - [x] Update tab navigation to include Dashboard
 - [x] Add icon mapping for dashboard tab
+
+## Biometric Login Feature
+- [x] Install expo-local-authentication package
+- [x] Create login screen with biometric prompt
+- [x] Add Face ID/Touch ID support for iOS
+- [x] Add fingerprint/face unlock support for Android
+- [x] Implement authentication state management
+- [x] Store authentication status in AsyncStorage
+- [x] Add logout functionality
+- [x] Integrate login screen into app layout
+- [x] Add fallback PIN/password option
