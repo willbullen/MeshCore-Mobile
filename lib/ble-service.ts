@@ -9,10 +9,27 @@ try {
   const ble = require("react-native-ble-plx");
   BleManager = ble.BleManager;
   State = ble.State;
-  BLE_AVAILABLE = true;
+  
+  // Check if BleManager is actually functional (not just imported)
+  // In Expo Go, the module imports but the native code doesn't exist
+  if (BleManager && typeof BleManager === 'function') {
+    // Try to instantiate to see if native module is available
+    try {
+      const testManager = new BleManager();
+      testManager.destroy();
+      BLE_AVAILABLE = true;
+      console.log("[BLE] BleManager is available and functional");
+    } catch (testError) {
+      console.warn("[BLE] BleManager exists but native module not available (expected in Expo Go)");
+      BLE_AVAILABLE = false;
+    }
+  }
 } catch (error) {
   console.warn("[BLE] react-native-ble-plx not available. BLE features disabled.");
-  // Mock State enum for when BLE is not available
+}
+
+// Always provide State enum (even if BLE is not available)
+if (!State) {
   State = {
     Unknown: "Unknown",
     Resetting: "Resetting",
@@ -55,23 +72,34 @@ class BLEService {
   private connectionCallbacks: ConnectionStateCallback[] = [];
 
   constructor() {
+    // Don't even try to instantiate BleManager if module is not available
+    // This prevents NativeEventEmitter errors in Expo Go
     if (!BLE_AVAILABLE || !BleManager) {
       console.warn("[BLE] BleManager not available, BLE features disabled");
+      this.manager = null;
       return;
     }
 
+    // Additional check: try to access a property to see if module is really available
     try {
+      // Test if BleManager is actually usable (not just imported)
+      if (typeof BleManager !== 'function') {
+        console.warn("[BLE] BleManager is not a constructor, BLE features disabled");
+        this.manager = null;
+        return;
+      }
+
       this.manager = new BleManager();
       
-      // Setup state listener - wrap in try-catch as it may fail in Expo Go
+      // Setup state listener - wrap in try-catch as it may fail
       try {
         this.setupStateListener();
       } catch (listenerError) {
         console.warn("[BLE] Failed to setup state listener (expected in Expo Go):", listenerError);
       }
     } catch (error) {
-      console.error("[BLE] Failed to initialize BleManager:", error);
-      this.manager = null; // Ensure manager is null if initialization fails
+      console.warn("[BLE] BleManager not functional (expected in Expo Go), BLE features disabled");
+      this.manager = null;
     }
   }
 

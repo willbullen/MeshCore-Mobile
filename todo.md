@@ -176,3 +176,15 @@
 - [x] Implement first-launch detection with AsyncStorage
 - [x] Add intro screen to app layout
 - [x] Test animations and transitions
+
+## Critical BLE Error Fix
+- [x] Prevent BleManager instantiation entirely in Expo Go to avoid NativeEventEmitter error
+
+## Backend Integration
+- [x] Create WebSocket service for real-time communication
+- [x] Connect to Django backend WebSocket endpoint
+- [x] Implement message sync (send/receive)
+- [x] Add node telemetry sync
+- [x] Handle WebSocket reconnection
+- [ ] Update Messages tab to use backend sync
+- [ ] Update Nodes tab to fetch from backend
