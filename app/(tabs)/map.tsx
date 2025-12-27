@@ -6,7 +6,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MapView, { Marker, PROVIDER_GOOGLE, Region, Callout } from "react-native-maps";
+import { GoogleMaps, AppleMaps } from "expo-maps";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/themed-text";
@@ -16,104 +16,54 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import {
   mockNodes,
   getStatusColor,
-  getBatteryColor,
   type Node,
 } from "@/constants/mock-data";
+
+// Use platform-specific map component
+const MapView = Platform.OS === "ios" ? AppleMaps.View : GoogleMaps.View;
 
 export default function MapScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "dark"];
   const insets = useSafeAreaInsets();
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
 
   // Filter nodes with location data
   const nodesWithLocation = mockNodes.filter((n) => n.latitude && n.longitude);
 
-  // Calculate initial region (center on San Francisco)
-  const [region] = useState<Region>({
-    latitude: 37.7749,
-    longitude: -122.4194,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  });
+  // Calculate initial camera position (center on San Francisco)
+  const initialCameraPosition = {
+    center: {
+      latitude: 37.7749,
+      longitude: -122.4194,
+    },
+    zoom: 14,
+  };
 
   const handleCenterOnUser = () => {
     // Center on the first node (Base Station)
     const baseStation = mockNodes[0];
-    if (baseStation.latitude && baseStation.longitude) {
-      mapRef.current?.animateToRegion({
-        latitude: baseStation.latitude,
-        longitude: baseStation.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+    if (baseStation.latitude && baseStation.longitude && mapRef.current) {
+      mapRef.current.animateCamera({
+        center: {
+          latitude: baseStation.latitude,
+          longitude: baseStation.longitude,
+        },
+        zoom: 15,
       });
     }
   };
 
-  const renderMarker = (node: Node) => {
-    if (!node.latitude || !node.longitude) return null;
-
-    const statusColor = getStatusColor(node.isOnline);
-    const batteryColor = getBatteryColor(node.batteryLevel);
-
-    return (
-      <Marker
-        key={node.nodeHash}
-        coordinate={{
-          latitude: node.latitude,
-          longitude: node.longitude,
-        }}
-        pinColor={node.isOnline ? "#22c55e" : "#64748b"}
-        title={node.name}
-        description={`${node.nodeType} • ${node.isOnline ? "Online" : "Offline"}`}
-      >
-        <Callout tooltip>
-          <View style={[styles.callout, { backgroundColor: colors.surface }]}>
-            <View style={styles.calloutHeader}>
-              <ThemedText type="defaultSemiBold">{node.name}</ThemedText>
-              <View
-                style={[
-                  styles.calloutStatusDot,
-                  { backgroundColor: statusColor },
-                ]}
-              />
-            </View>
-            
-            <View style={[styles.calloutDivider, { backgroundColor: colors.border }]} />
-            
-            <View style={styles.calloutMetrics}>
-              <View style={styles.calloutMetric}>
-                <ThemedText style={[styles.calloutLabel, { color: colors.textSecondary }]}>
-                  Type
-                </ThemedText>
-                <ThemedText style={styles.calloutValue}>{node.nodeType}</ThemedText>
-              </View>
-              
-              {node.batteryLevel !== undefined && (
-                <View style={styles.calloutMetric}>
-                  <ThemedText style={[styles.calloutLabel, { color: colors.textSecondary }]}>
-                    Battery
-                  </ThemedText>
-                  <ThemedText style={[styles.calloutValue, { color: batteryColor }]}>
-                    {node.batteryLevel}%
-                  </ThemedText>
-                </View>
-              )}
-              
-              {node.rssi !== undefined && (
-                <View style={styles.calloutMetric}>
-                  <ThemedText style={[styles.calloutLabel, { color: colors.textSecondary }]}>
-                    Signal
-                  </ThemedText>
-                  <ThemedText style={styles.calloutValue}>{node.rssi} dBm</ThemedText>
-                </View>
-              )}
-            </View>
-          </View>
-        </Callout>
-      </Marker>
-    );
-  };
+  // Create markers array for the map
+  const markers = nodesWithLocation.map((node) => ({
+    id: node.nodeHash,
+    coordinate: {
+      latitude: node.latitude!,
+      longitude: node.longitude!,
+    },
+    title: node.name,
+    color: node.isOnline ? "#22c55e" : "#64748b",
+  }));
 
   return (
     <ThemedView style={styles.container}>
@@ -138,16 +88,9 @@ export default function MapScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-        initialRegion={region}
-        showsUserLocation
-        showsMyLocationButton={false}
-        showsCompass
-        showsScale
-        customMapStyle={colorScheme === "dark" ? darkMapStyle : []}
-      >
-        {nodesWithLocation.map(renderMarker)}
-      </MapView>
+        cameraPosition={initialCameraPosition}
+        markers={markers}
+      />
 
       {/* Center on User Button */}
       <Pressable
@@ -188,51 +131,6 @@ export default function MapScreen() {
     </ThemedView>
   );
 }
-
-// Dark map style for better visibility
-const darkMapStyle = [
-  {
-    elementType: "geometry",
-    stylers: [{ color: "#212121" }],
-  },
-  {
-    elementType: "labels.icon",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#212121" }],
-  },
-  {
-    featureType: "administrative",
-    elementType: "geometry",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.fill",
-    stylers: [{ color: "#2c2c2c" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#8a8a8a" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#000000" }],
-  },
-];
 
 const styles = StyleSheet.create({
   container: {
@@ -291,43 +189,5 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 13,
-  },
-  callout: {
-    width: 200,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  calloutHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  calloutStatusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  calloutDivider: {
-    height: 1,
-  },
-  calloutMetrics: {
-    gap: Spacing.xs,
-  },
-  calloutMetric: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  calloutLabel: {
-    fontSize: 13,
-  },
-  calloutValue: {
-    fontSize: 13,
-    fontWeight: "600",
   },
 });

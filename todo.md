@@ -77,3 +77,8 @@
 - [x] Verify no dead ends or broken links
 - [x] Take screenshots for documentation
 - [x] Create checkpoint with final version
+
+## Bug Fixes
+- [x] Fix react-native-maps error by switching to expo-maps
+- [x] Update map.tsx to use Expo Maps API
+- [x] Test map functionality on device
