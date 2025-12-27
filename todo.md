@@ -245,3 +245,9 @@
 - [x] Change intro screen subtitle from 'Decentralized Mesh Network' to 'Monitoring Network'
 - [x] Update intro-screen.tsx
 - [x] Fix title to show Enviroscan instead of MeshCore
+
+## Create Static app.json for Expo Launch
+- [x] Generate app.json from app.config.ts
+- [x] Keep app.config.ts for development flexibility
+- [x] Fix remaining branding issues in app.config.ts
+- [ ] Test that both files work together
