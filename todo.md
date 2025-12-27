@@ -310,3 +310,7 @@
 ## Fix Reanimated New Architecture Requirement
 - [x] Re-enable newArchEnabled (Reanimated 4.x requires it)
 - [ ] Test build again
+
+## Fix Reanimated RCT_NEW_ARCH_ENABLED Environment Variable
+- [x] Add RCT_NEW_ARCH_ENABLED=1 to eas.json build environment
+- [ ] Test build again
