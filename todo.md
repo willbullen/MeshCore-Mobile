@@ -166,3 +166,6 @@
 - [x] Update Connect tab to show "requires dev build" message
 - [x] Update Map tab to show fallback when maps unavailable
 - [x] Test app runs without errors in Expo Go
+
+## New Bug Fix
+- [x] Fix NativeEventEmitter error in BLE service initialization

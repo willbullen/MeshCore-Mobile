@@ -62,9 +62,16 @@ class BLEService {
 
     try {
       this.manager = new BleManager();
-      this.setupStateListener();
+      
+      // Setup state listener - wrap in try-catch as it may fail in Expo Go
+      try {
+        this.setupStateListener();
+      } catch (listenerError) {
+        console.warn("[BLE] Failed to setup state listener (expected in Expo Go):", listenerError);
+      }
     } catch (error) {
       console.error("[BLE] Failed to initialize BleManager:", error);
+      this.manager = null; // Ensure manager is null if initialization fails
     }
   }
 
