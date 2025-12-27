@@ -17,6 +17,8 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/manus-runtime";
+import { IntroScreen } from "@/components/intro-screen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -33,11 +35,42 @@ export default function RootLayout() {
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+  const [showIntro, setShowIntro] = useState(true);
+  const [introChecked, setIntroChecked] = useState(false);
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
     initManusRuntime();
   }, []);
+
+  // Check if this is first launch
+  useEffect(() => {
+    const checkFirstLaunch = async () => {
+      try {
+        const hasLaunched = await AsyncStorage.getItem("@meshcore_has_launched");
+        if (hasLaunched) {
+          // Not first launch, skip intro
+          setShowIntro(false);
+        }
+        setIntroChecked(true);
+      } catch (error) {
+        console.error("Failed to check first launch:", error);
+        setShowIntro(false);
+        setIntroChecked(true);
+      }
+    };
+    
+    checkFirstLaunch();
+  }, []);
+
+  const handleIntroFinish = async () => {
+    try {
+      await AsyncStorage.setItem("@meshcore_has_launched", "true");
+    } catch (error) {
+      console.error("Failed to save launch state:", error);
+    }
+    setShowIntro(false);
+  };
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);
@@ -71,8 +104,14 @@ export default function RootLayout() {
     [initialFrame, initialInsets],
   );
 
+  // Don't render content until intro check is complete
+  if (!introChecked) {
+    return null;
+  }
+
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {showIntro && <IntroScreen onFinish={handleIntroFinish} />}
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

@@ -169,3 +169,10 @@
 
 ## New Bug Fix
 - [x] Fix NativeEventEmitter error in BLE service initialization
+
+## Intro Screen Feature
+- [x] Create animated intro screen component with logo
+- [x] Add fade-in and scale animations with Reanimated
+- [x] Implement first-launch detection with AsyncStorage
+- [x] Add intro screen to app layout
+- [x] Test animations and transitions
