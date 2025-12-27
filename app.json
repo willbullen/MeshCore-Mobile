@@ -10,7 +10,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "manus20251226202925",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "extra": {
       "eas": {
         "projectId": "e8eec2ce-70f8-49e7-bf01-2360cef376d6"
@@ -64,6 +64,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-ble-plx",
       [
         "expo-splash-screen",
         {

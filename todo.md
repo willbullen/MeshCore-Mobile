@@ -299,3 +299,10 @@
 - [x] Remove react-native-maps completely
 - [x] Revert map.tsx to simple fallback UI
 - [x] Restart server and verify app loads
+
+## Fix iOS Archive Build Failure
+- [x] Analyze Xcode build error logs
+- [x] Identify missing react-native-ble-plx config plugin
+- [x] Disable newArchEnabled for compatibility
+- [x] Add react-native-ble-plx to plugins array
+- [ ] Test build with Expo Launch
