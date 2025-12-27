@@ -1,8 +1,8 @@
 /**
- * Enviroscan Protocol Handler
+ * MeshCore Protocol Handler
  * 
- * Handles encoding and decoding of Enviroscan packets for transmission over BLE.
- * Based on the Meshtastic protocol with custom extensions for Enviroscan.
+ * Handles encoding and decoding of MeshCore packets for transmission over BLE.
+ * Based on the Meshtastic protocol with custom extensions for MeshCore.
  */
 
 // Packet types

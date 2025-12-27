@@ -39,7 +39,7 @@ export function useBiometricAuth() {
   const authenticate = async (): Promise<boolean> => {
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Authenticate to access Enviroscan",
+        promptMessage: "Authenticate to access MeshCore",
         fallbackLabel: "Use Passcode",
         cancelLabel: "Cancel",
         disableDeviceFallback: false,

@@ -12,11 +12,11 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: 'Enviroscan',
+  appName: 'MeshCore Mobile',
   appSlug: 'meshcore-mobile',
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: 'https://files.manuscdn.com/user_upload_by_module/session_file/87842268/WQhUITRprAfXqqmm.png',
+  logoUrl: 'https://files.manuscdn.com/user_upload_by_module/session_file/87842268/veuVntIJlyxXEfLD.png',
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -36,8 +36,8 @@ const config: ExpoConfig = {
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
       UIBackgroundModes: ["audio", "bluetooth-central"],
-      NSBluetoothAlwaysUsageDescription: "Enviroscan needs Bluetooth to connect to mesh network devices.",
-      NSBluetoothPeripheralUsageDescription: "Enviroscan needs Bluetooth to connect to mesh network devices.",
+      NSBluetoothAlwaysUsageDescription: "MeshCore needs Bluetooth to connect to mesh network devices.",
+      NSBluetoothPeripheralUsageDescription: "MeshCore needs Bluetooth to connect to mesh network devices.",
     },
   },
   android: {

@@ -1,4 +1,4 @@
-# Enviroscan Mobile App - TODO
+# MeshCore Mobile App - TODO
 
 ## Phase 1: Foundation & Branding
 - [x] Update app.config.ts with MeshCore branding
@@ -227,13 +227,10 @@
 - [x] Integrate login screen into app layout
 - [x] Add fallback PIN/password option
 
-## Rebranding to Enviroscan
-- [x] Replace app icon with new Enviroscan logo
-- [x] Copy icon to all required locations (splash, favicon, Android)
-- [x] Update app.config.ts with Enviroscan name and logo URL
-- [x] Update biometric login screen with Enviroscan branding
-- [x] Update intro screen with Enviroscan name
-- [x] Update all code references from MeshCore to Enviroscan
-- [x] Update README with Enviroscan branding
-- [ ] Update GitHub repository name and description
-- [ ] Push changes to GitHub
+## Bug Fix: Login Screen Still Shows Old Branding
+- [x] Investigate why login screen shows old MeshCore icon
+- [x] Check if icon.png was properly updated
+- [x] Verify biometric-login.tsx text changes were applied
+- [x] Clear Metro bundler cache if needed
+- [x] Restart dev server to reload assets
+- [ ] Test login screen shows new Enviroscan branding

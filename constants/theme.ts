@@ -1,5 +1,5 @@
 /**
- * Enviroscan Mobile App Theme
+ * MeshCore Mobile App Theme
  * Black and dark blue color scheme matching the web application
  */
 
@@ -30,7 +30,7 @@ export const Colors = {
     card: "#f9fafb",
   },
   dark: {
-    // Enviroscan brand colors
+    // MeshCore brand colors
     text: "#ffffff",              // White
     textSecondary: "#94a3b8",     // Muted gray
     textDisabled: "#64748b",      // Darker gray

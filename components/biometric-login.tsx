@@ -98,7 +98,7 @@ export function BiometricLogin({ onAuthenticated }: BiometricLoginProps) {
       });
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Authenticate to access Enviroscan",
+        promptMessage: "Authenticate to access MeshCore",
         fallbackLabel: "Use Passcode",
         cancelLabel: "Cancel",
         disableDeviceFallback: false,
@@ -155,7 +155,7 @@ export function BiometricLogin({ onAuthenticated }: BiometricLoginProps) {
 
         {/* App Name */}
         <ThemedText type="title" style={styles.title}>
-          Enviroscan
+          MeshCore
         </ThemedText>
         <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
           Secure Mesh Networking

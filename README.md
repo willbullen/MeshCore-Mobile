@@ -1,12 +1,12 @@
-# Enviroscan Mobile
+# MeshCore Mobile
 
-A React Native mobile application for Enviroscan mesh networking devices, built with Expo SDK 54, TypeScript, and React 19.
+A React Native mobile application for MeshCore mesh networking devices, built with Expo SDK 54, TypeScript, and React 19.
 
-![Enviroscan Mobile](assets/images/icon.png)
+![MeshCore Mobile](assets/images/icon.png)
 
 ## Overview
 
-Enviroscan Mobile is the companion mobile app for the Enviroscan mesh networking system. It enables users to communicate with RAK4631/Heltec/Meshtastic devices via Bluetooth Low Energy (BLE), view mesh network topology, send messages, and monitor node telemetry in real-time.
+MeshCore Mobile is the companion mobile app for the MeshCore mesh networking system. It enables users to communicate with RAK4631/Heltec/Meshtastic devices via Bluetooth Low Energy (BLE), view mesh network topology, send messages, and monitor node telemetry in real-time.
 
 **Key Features:**
 
@@ -15,7 +15,7 @@ Enviroscan Mobile is the companion mobile app for the Enviroscan mesh networking
 - 🗺️ **Interactive Map**: Visualize node locations with color-coded status markers
 - 💬 **Real-Time Messaging**: Send/receive text messages through mesh network
 - 📊 **Node Monitoring**: View battery, signal strength, and telemetry data
-- 🌐 **Backend Sync**: WebSocket integration with Django Enviroscan-Bridge API
+- 🌐 **Backend Sync**: WebSocket integration with Django MeshCore-Bridge API
 - 🎨 **Modern UI**: Dark theme with smooth animations and haptic feedback
 - 🔄 **Offline Queue**: Message queueing when devices are disconnected
 
@@ -59,7 +59,7 @@ meshcore-mobile/
 │   └── use-theme-color.ts  # Theme color hook
 ├── lib/                     # Core services
 │   ├── ble-service.ts      # Bluetooth BLE service
-│   ├── meshcore-protocol.ts # Enviroscan packet encoding/decoding
+│   ├── meshcore-protocol.ts # MeshCore packet encoding/decoding
 │   ├── websocket-service.ts # WebSocket backend service
 │   └── api-service.ts      # REST API service
 └── assets/                  # Images, icons, fonts
@@ -78,8 +78,8 @@ meshcore-mobile/
 
 ```bash
 # Clone the repository
-git clone https://github.com/willbullen/Enviroscan-Mobile.git
-cd Enviroscan-Mobile
+git clone https://github.com/willbullen/MeshCore-Mobile.git
+cd MeshCore-Mobile
 
 # Install dependencies
 pnpm install
@@ -126,7 +126,7 @@ Update `app.config.ts` to customize app name and logo:
 
 ```typescript
 const env = {
-  appName: 'Enviroscan Mobile',
+  appName: 'MeshCore Mobile',
   appSlug: 'meshcore-mobile',
   logoUrl: 'https://your-s3-bucket.com/logo.png',
   // ...
@@ -189,7 +189,7 @@ User Taps "Connect" → BLEService.connect(deviceId)
                  ↓
          Listen for mesh packets
                  ↓
-         EnviroscanProtocol.decode()
+         MeshCoreProtocol.decode()
                  ↓
          Update UI (messages/nodes/map)
 ```
@@ -208,7 +208,7 @@ App Launch → WebSocketService.connect()
     Sync with local state
 ```
 
-### Enviroscan Protocol
+### MeshCore Protocol
 
 The app uses a custom binary protocol for mesh packets:
 
@@ -279,7 +279,7 @@ pnpm reset-project
 
 ## Backend Integration
 
-### Django Enviroscan-Bridge API
+### Django MeshCore-Bridge API
 
 The app connects to the Django backend via:
 
@@ -380,7 +380,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For issues and questions:
 
-- GitHub Issues: https://github.com/willbullen/Enviroscan-Mobile/issues
+- GitHub Issues: https://github.com/willbullen/MeshCore-Mobile/issues
 - Email: support@meshcore.io
 - Discord: https://discord.gg/meshcore
 

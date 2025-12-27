@@ -1,5 +1,5 @@
 /**
- * Mock data for Enviroscan mobile app UI prototype
+ * Mock data for MeshCore mobile app UI prototype
  */
 
 export type NodeType = 'chat' | 'repeater' | 'room_server' | 'sensor' | 'companion';
