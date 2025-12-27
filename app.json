@@ -64,7 +64,17 @@
     "plugins": [
       "expo-router",
       "react-native-ble-plx",
-      "./plugins/withFollyFix",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPodfileProperties": {
+              "CLANG_CXX_LANGUAGE_STANDARD": "c++20"
+            },
+            "ccacheEnabled": false
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {

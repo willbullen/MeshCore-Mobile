@@ -332,3 +332,8 @@
 - [x] Create withFollyFix config plugin to disable Folly coroutines
 - [x] Add plugin to app.json
 - [ ] Test build with Expo Launch
+
+## Fix Folly with expo-build-properties
+- [ ] Install expo-build-properties
+- [ ] Add extraPods configuration to disable Folly coroutines
+- [ ] Test build
