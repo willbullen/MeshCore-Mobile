@@ -91,7 +91,8 @@
 - [x] Add BLE state management (connected/disconnected)
 - [x] Create packet send/receive handlers
 - [x] Update Connect tab with real BLE functionality
-- [ ] Add connection status indicators across app
+- [x] Add connection status indicators across app
+- [x] Integrate Bluetooth with Messages tab for real messaging
 
 ## Phase 11: MeshCore Protocol
 - [x] Create protocol constants and types
@@ -103,12 +104,12 @@
 - [ ] Implement retry logic for failed packets
 
 ## Phase 12: Backend Integration
-- [ ] Create API service with axios
+- [x] Create API service with axios
 - [ ] Implement WebSocket connection to Django
-- [ ] Add authentication token management
-- [ ] Create REST endpoints for nodes
-- [ ] Create REST endpoints for messages
-- [ ] Create REST endpoints for telemetry
+- [x] Add authentication token management
+- [x] Create REST endpoints for nodes
+- [x] Create REST endpoints for messages
+- [x] Create REST endpoints for telemetry
 - [ ] Implement real-time message sync
 - [ ] Add connection status monitoring
 

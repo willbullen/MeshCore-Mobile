@@ -16,6 +16,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useBluetooth } from "@/hooks/use-bluetooth";
+import { PacketType, type MeshPacket } from "@/lib/meshcore-protocol";
 import {
   mockNodes,
   getMessagesForNode,
@@ -30,11 +32,24 @@ export default function ChatScreen() {
   const { nodeHash } = useLocalSearchParams<{ nodeHash: string }>();
   
   const [messageText, setMessageText] = useState("");
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  
+  // Bluetooth state and actions
+  const [bluetoothState, bluetoothActions] = useBluetooth();
   
   // Find the node and messages
   const node = mockNodes.find((n) => n.nodeHash === nodeHash);
-  const messages = node ? getMessagesForNode(nodeHash) : [];
+  const mockMessages = node ? getMessagesForNode(nodeHash) : [];
+  
+  // Combine mock messages with local messages
+  const messages = [...mockMessages, ...localMessages].sort(
+    (a, b) => {
+      const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : a.timestamp;
+      const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : b.timestamp;
+      return aTime - bTime;
+    }
+  );
   
   // My node (Base Station)
   const myNodeHash = "a1b2c3d4";
@@ -47,11 +62,66 @@ export default function ChatScreen() {
       }, 100);
     }
   }, [messages.length]);
+  
+  // Listen for incoming messages
+  useEffect(() => {
+    const unsubscribe = bluetoothActions.onMessageReceived((packet: MeshPacket) => {
+      console.log("[Chat] Received packet:", packet);
+      
+      // Only process text messages for this conversation
+      if (packet.type === PacketType.TEXT_MESSAGE && packet.from === nodeHash) {
+        const senderNode = mockNodes.find((n) => n.nodeHash === packet.from);
+        if (!senderNode) return;
+        
+        const newMessage: Message = {
+          id: `ble-${packet.id}`,
+          sender: senderNode,
+          content: packet.payload.text,
+          messageType: "txt_msg",
+          timestamp: new Date(packet.timestamp),
+          status: "delivered",
+        };
+        
+        setLocalMessages((prev) => [...prev, newMessage]);
+      }
+    });
+    
+    return unsubscribe;
+  }, [nodeHash, bluetoothActions]);
 
-  const handleSend = () => {
-    if (messageText.trim()) {
-      // TODO: Add message to list
+  const handleSend = async () => {
+    if (messageText.trim() && nodeHash) {
+      const text = messageText.trim();
       setMessageText("");
+      
+      // Add optimistic message to UI
+      const myNode = mockNodes.find((n) => n.nodeHash === myNodeHash);
+      if (myNode) {
+        const optimisticMessage: Message = {
+          id: `local-${Date.now()}`,
+          sender: myNode,
+          recipient: node,
+          content: text,
+          messageType: "txt_msg",
+          timestamp: new Date(),
+          status: "queued",
+        };
+        setLocalMessages((prev) => [...prev, optimisticMessage]);
+      }
+      
+      // Send via Bluetooth if connected
+      if (bluetoothState.isConnected) {
+        try {
+          await bluetoothActions.sendMessage(nodeHash, text, 0);
+          console.log("[Chat] Message sent via Bluetooth");
+        } catch (error) {
+          console.error("[Chat] Failed to send message:", error);
+          // TODO: Update message status to failed
+        }
+      } else {
+        console.log("[Chat] Not connected, message queued locally");
+        // TODO: Queue message for later delivery
+      }
     }
   };
 

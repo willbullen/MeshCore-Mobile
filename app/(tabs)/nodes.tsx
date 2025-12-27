@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import {
@@ -125,6 +126,7 @@ export default function NodesScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <ConnectionStatusBanner />
       {/* Header */}
       <View
         style={[
