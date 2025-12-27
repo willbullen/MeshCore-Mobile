@@ -314,3 +314,11 @@
 ## Fix Reanimated RCT_NEW_ARCH_ENABLED Environment Variable
 - [x] Add RCT_NEW_ARCH_ENABLED=1 to eas.json build environment
 - [ ] Test build again
+
+## Downgrade Reanimated to 3.x for Expo Launch Compatibility
+- [x] Downgrade react-native-reanimated from 4.x to 3.x
+- [x] Remove react-native-worklets dependency (only needed for 4.x)
+- [x] Disable newArchEnabled in app.json
+- [x] Fix useScrollOffset -> useScrollViewOffset API change
+- [ ] Test app still works
+- [ ] Test Expo Launch build
