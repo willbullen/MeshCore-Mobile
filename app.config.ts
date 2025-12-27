@@ -35,7 +35,9 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
-      UIBackgroundModes: ["audio"],
+      UIBackgroundModes: ["audio", "bluetooth-central"],
+      NSBluetoothAlwaysUsageDescription: "MeshCore needs Bluetooth to connect to mesh network devices.",
+      NSBluetoothPeripheralUsageDescription: "MeshCore needs Bluetooth to connect to mesh network devices.",
     },
   },
   android: {
@@ -48,7 +50,14 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    permissions: ["POST_NOTIFICATIONS"],
+    permissions: [
+      "POST_NOTIFICATIONS",
+      "BLUETOOTH",
+      "BLUETOOTH_ADMIN",
+      "BLUETOOTH_CONNECT",
+      "BLUETOOTH_SCAN",
+      "ACCESS_FINE_LOCATION",
+    ],
     intentFilters: [
       {
         action: "VIEW",

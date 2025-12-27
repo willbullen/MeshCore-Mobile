@@ -82,3 +82,73 @@
 - [x] Fix react-native-maps error by switching to expo-maps
 - [x] Update map.tsx to use Expo Maps API
 - [x] Test map functionality on device
+
+## Phase 10: Bluetooth Integration
+- [x] Install react-native-ble-plx package
+- [x] Add Bluetooth permissions to app.config.ts
+- [x] Create BLE service for device scanning
+- [x] Implement device connection management
+- [x] Add BLE state management (connected/disconnected)
+- [x] Create packet send/receive handlers
+- [ ] Update Connect tab with real BLE functionality
+- [ ] Add connection status indicators across app
+
+## Phase 11: MeshCore Protocol
+- [x] Create protocol constants and types
+- [x] Implement packet encoder (text, position, telemetry)
+- [x] Implement packet decoder
+- [x] Add CRC/checksum validation
+- [ ] Create message queue for reliable delivery
+- [x] Add packet acknowledgment system
+- [ ] Implement retry logic for failed packets
+
+## Phase 12: Backend Integration
+- [ ] Create API service with axios
+- [ ] Implement WebSocket connection to Django
+- [ ] Add authentication token management
+- [ ] Create REST endpoints for nodes
+- [ ] Create REST endpoints for messages
+- [ ] Create REST endpoints for telemetry
+- [ ] Implement real-time message sync
+- [ ] Add connection status monitoring
+
+## Phase 13: Enhanced Messaging
+- [ ] Install expo-notifications for push notifications
+- [ ] Configure notification permissions
+- [ ] Add notification handler for new messages
+- [ ] Implement offline message queue with AsyncStorage
+- [ ] Add message delivery status tracking
+- [ ] Create message retry mechanism
+- [ ] Add typing indicators
+- [ ] Implement read receipts
+
+## Phase 14: Multimedia Support
+- [ ] Install expo-image-picker for image selection
+- [ ] Add image compression with expo-image-manipulator
+- [ ] Implement image upload to backend
+- [ ] Add image preview in chat
+- [ ] Install expo-av for audio recording
+- [ ] Create voice message recorder UI
+- [ ] Implement audio playback controls
+- [ ] Add waveform visualization
+
+## Phase 15: UI/UX Polish
+- [ ] Add loading skeleton components
+- [ ] Implement pull-to-refresh animations
+- [ ] Add message send animations
+- [ ] Create connection status banner
+- [ ] Add haptic feedback throughout
+- [ ] Implement swipe gestures for actions
+- [ ] Add dark mode splash screen
+- [ ] Create onboarding flow
+
+## Phase 16: Testing & Deployment
+- [ ] Test Bluetooth on physical RAK4631
+- [ ] Test backend connectivity
+- [ ] Test offline functionality
+- [ ] Test push notifications
+- [ ] Test image/voice sharing
+- [ ] Build production APK
+- [ ] Build production IPA
+- [ ] Create app store assets
+- [ ] Write deployment documentation
