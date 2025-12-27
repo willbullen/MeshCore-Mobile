@@ -190,3 +190,15 @@
 - [ ] Fix infinite loop issue in WebSocket hook
 - [ ] Update Messages tab to use backend sync
 - [ ] Update Nodes tab to fetch from backend
+
+## WebSocket Hook Fix
+- [x] Debug infinite loop in useWebSocket hook
+- [x] Use useRef for stable callback references
+- [x] Test hook works without causing re-renders
+- [ ] Re-integrate into chat screen
+
+## Documentation
+- [x] Create comprehensive README with setup instructions
+- [x] Document architecture and data flow
+- [x] Add troubleshooting section
+- [x] Include deployment instructions

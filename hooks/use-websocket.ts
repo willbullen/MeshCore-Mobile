@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { getWebSocketService, initWebSocketService, type WebSocketMessage } from "@/lib/websocket-service";
 
 // Default backend URL - update this to match your Django backend
@@ -7,6 +7,19 @@ const DEFAULT_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://local
 export function useWebSocket() {
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<WebSocketMessage[]>([]);
+  
+  // Use useRef to store callbacks to prevent re-subscription on every render
+  const connectedRef = useRef(connected);
+  const messagesRef = useRef(messages);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    connectedRef.current = connected;
+  }, [connected]);
+  
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
   
   // Use useMemo to ensure wsService is only created once
   const wsService = useMemo(() => {
@@ -17,7 +30,7 @@ export function useWebSocket() {
     }
   }, []);
 
-  // Connect on mount
+  // Connect on mount - only run once
   useEffect(() => {
     // Set initial connection state
     setConnected(wsService.isConnected());
@@ -27,12 +40,15 @@ export function useWebSocket() {
       wsService.connect();
     }
 
-    // Subscribe to connection state changes
+    // Subscribe to connection state changes with stable callback
     const unsubscribeConnection = wsService.onConnectionChange((isConnected) => {
-      setConnected(isConnected);
+      // Only update if state actually changed
+      if (connectedRef.current !== isConnected) {
+        setConnected(isConnected);
+      }
     });
 
-    // Subscribe to messages
+    // Subscribe to messages with stable callback
     const unsubscribeMessages = wsService.onMessage((message) => {
       setMessages((prev) => [...prev, message]);
     });
@@ -43,7 +59,7 @@ export function useWebSocket() {
       unsubscribeMessages();
       // Don't disconnect here - keep connection alive across component unmounts
     };
-  }, [wsService]);
+  }, []); // Empty deps - only run once on mount
 
   const sendMessage = useCallback(
     (to: string, text: string, channel?: number) => {
