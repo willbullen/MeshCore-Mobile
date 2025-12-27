@@ -5,6 +5,8 @@
     "owner": "willbullen",
     "version": "1.0.0",
     "orientation": "portrait",
+    "privacy": "public",
+    "primaryColor": "#1a73e8",
     "icon": "./assets/images/icon.png",
     "scheme": "manus20251226202925",
     "userInterfaceStyle": "automatic",

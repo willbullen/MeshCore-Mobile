@@ -259,3 +259,13 @@
 - [x] Update Android package to 'com.willbullen.enviroscan'
 - [x] Rename app.config.ts to .backup to avoid conflicts with Expo Launch
 - [ ] Test Expo Launch build process
+
+## Legal Documentation for App Store
+- [x] Create privacy policy document
+- [x] Create terms of service document
+- [x] Add disclaimer to About section in Connect tab
+- [x] Add Privacy Policy and Terms links to About section
+- [x] Update contact email to admin@enviroscan.io
+- [x] Update app.json with privacy settings
+- [ ] Host legal documents on GitHub (already in repo)
+- [ ] Add open source license attributions (optional)

@@ -417,6 +417,58 @@ export default function ConnectScreen() {
                 <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
               </View>
             </Pressable>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.aboutRow,
+                pressed && { opacity: 0.7 },
+              ]}
+              onPress={() =>
+                Linking.openURL("https://github.com/willbullen/MeshCore-Mobile/blob/main/docs/PRIVACY_POLICY.md")
+              }
+            >
+              <ThemedText style={{ color: colors.textSecondary }}>Privacy Policy</ThemedText>
+              <View style={styles.aboutRowRight}>
+                <ThemedText style={{ color: colors.primary }}>View</ThemedText>
+                <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
+              </View>
+            </Pressable>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.aboutRow,
+                pressed && { opacity: 0.7 },
+              ]}
+              onPress={() =>
+                Linking.openURL("https://github.com/willbullen/MeshCore-Mobile/blob/main/docs/TERMS_OF_SERVICE.md")
+              }
+            >
+              <ThemedText style={{ color: colors.textSecondary }}>Terms of Service</ThemedText>
+              <View style={styles.aboutRowRight}>
+                <ThemedText style={{ color: colors.primary }}>View</ThemedText>
+                <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Disclaimer */}
+        <View style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Disclaimer
+          </ThemedText>
+          
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <ThemedText style={[styles.disclaimerText, { color: colors.textSecondary }]}>
+              Enviroscan is provided for informational purposes only. Data accuracy depends on sensor hardware quality and configuration. This app is NOT intended for safety-critical, medical, or life-support applications.
+            </ThemedText>
+            <ThemedText style={[styles.disclaimerText, { color: colors.textSecondary, marginTop: Spacing.md }]}>
+              We do not guarantee the accuracy, reliability, or availability of data from connected sensors. Use at your own risk.
+            </ThemedText>
           </View>
         </View>
 
@@ -579,5 +631,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.xs,
+  },
+  disclaimerText: {
+    fontSize: 13,
+    lineHeight: 20,
   },
 });
