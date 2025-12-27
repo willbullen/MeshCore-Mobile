@@ -276,3 +276,13 @@
 - [x] Configure production build settings
 - [ ] Test build with Expo Launch again
 - [ ] Check build logs for specific errors if build fails
+
+## Replace expo-maps with Native Map Solution
+- [x] Find all uses of expo-maps in codebase
+- [x] Replace with react-native-maps (simpler, no API key required for basic use)
+- [x] Update package.json to remove expo-maps
+- [x] Install react-native-maps package
+- [x] Fix TypeScript errors
+- [x] Restart dev server
+- [ ] Test map functionality in Expo Go
+- [ ] Retry iOS build with Expo Launch

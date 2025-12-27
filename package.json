@@ -43,7 +43,7 @@
     "expo-linear-gradient": "^15.0.8",
     "expo-linking": "~8.0.10",
     "expo-local-authentication": "^17.0.8",
-    "expo-maps": "^0.12.10",
+    "react-native-maps": "1.18.0",
     "expo-notifications": "~0.32.9",
     "expo-router": "~6.0.19",
     "expo-secure-store": "~15.0.8",
