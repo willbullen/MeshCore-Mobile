@@ -327,3 +327,8 @@
 - [x] Remove expo-notifications from package.json
 - [x] Remove POST_NOTIFICATIONS permission from app.json
 - [ ] Test build with Expo Launch
+
+## Fix Folly Coroutine Header Error
+- [x] Create withFollyFix config plugin to disable Folly coroutines
+- [x] Add plugin to app.json
+- [ ] Test build with Expo Launch

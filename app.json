@@ -64,6 +64,7 @@
     "plugins": [
       "expo-router",
       "react-native-ble-plx",
+      "./plugins/withFollyFix",
       [
         "expo-splash-screen",
         {
