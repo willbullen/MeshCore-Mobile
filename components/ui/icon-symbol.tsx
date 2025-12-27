@@ -16,6 +16,7 @@ type IconSymbolName = keyof typeof MAPPING;
 const MAPPING = {
   // Navigation icons
   "house.fill": "home",
+  "square.grid.2x2.fill": "dashboard",
   "message.fill": "message",
   "antenna.radiowaves.left.and.right": "cell-tower",
   "map.fill": "map",

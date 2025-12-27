@@ -206,3 +206,12 @@
 ## GitHub
 - [x] Commit all changes
 - [x] Push to GitHub repository
+
+## Dashboard Feature
+- [x] Create new dashboard tab as first screen
+- [x] Add network overview card (connected nodes, health status)
+- [x] Add metrics widgets (total nodes, messages today, battery avg)
+- [x] Add recent activity feed (last 5 messages/events)
+- [x] Add quick action buttons (Send Message, Scan Devices, View Map)
+- [x] Update tab navigation to include Dashboard
+- [x] Add icon mapping for dashboard tab
