@@ -306,3 +306,7 @@
 - [x] Disable newArchEnabled for compatibility
 - [x] Add react-native-ble-plx to plugins array
 - [ ] Test build with Expo Launch
+
+## Fix Reanimated New Architecture Requirement
+- [x] Re-enable newArchEnabled (Reanimated 4.x requires it)
+- [ ] Test build again
