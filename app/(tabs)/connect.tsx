@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Pressable,
   ScrollView,
@@ -7,37 +7,25 @@ import {
   TextInput,
   View,
   Linking,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { State } from "react-native-ble-plx";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-
-interface BluetoothDevice {
-  id: string;
-  name: string;
-  address: string;
-  rssi: number;
-}
-
-const mockBluetoothDevices: BluetoothDevice[] = [
-  { id: "1", name: "RAK4631-A1B2", address: "00:11:22:33:44:55", rssi: -45 },
-  { id: "2", name: "RAK4631-C3D4", address: "AA:BB:CC:DD:EE:FF", rssi: -68 },
-  { id: "3", name: "Heltec-V3", address: "11:22:33:44:55:66", rssi: -75 },
-];
+import { useBluetooth } from "@/hooks/use-bluetooth";
 
 export default function ConnectScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "dark"];
   const insets = useSafeAreaInsets();
   
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [discoveredDevices, setDiscoveredDevices] = useState<BluetoothDevice[]>([]);
+  const [bluetoothState, bluetoothActions] = useBluetooth();
   
   // Settings state
   const [nodeName, setNodeName] = useState("Base Station");
@@ -45,30 +33,74 @@ export default function ConnectScreen() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [keepScreenOn, setKeepScreenOn] = useState(false);
 
-  const handleScan = () => {
-    setIsScanning(true);
-    // Simulate scanning
-    setTimeout(() => {
-      setDiscoveredDevices(mockBluetoothDevices);
-      setIsScanning(false);
-    }, 2000);
+  // Monitor Bluetooth state
+  useEffect(() => {
+    if (bluetoothState.bleState === State.PoweredOff) {
+      Alert.alert(
+        "Bluetooth Off",
+        "Please enable Bluetooth to connect to mesh devices.",
+        [{ text: "OK" }]
+      );
+    }
+  }, [bluetoothState.bleState]);
+
+  // Show error alerts
+  useEffect(() => {
+    if (bluetoothState.error) {
+      Alert.alert("Bluetooth Error", bluetoothState.error, [{ text: "OK" }]);
+    }
+  }, [bluetoothState.error]);
+
+  const handleScan = async () => {
+    try {
+      await bluetoothActions.startScan();
+      // Auto-stop scan after 30 seconds
+      setTimeout(() => {
+        if (bluetoothState.isScanning) {
+          bluetoothActions.stopScan();
+        }
+      }, 30000);
+    } catch (error: any) {
+      Alert.alert("Scan Failed", error.message || "Could not start scanning");
+    }
   };
 
-  const handleConnect = (device: BluetoothDevice) => {
-    setConnectedDevice(device);
-    setIsConnected(true);
-    setDiscoveredDevices([]);
+  const handleConnect = async (deviceId: string) => {
+    try {
+      await bluetoothActions.connect(deviceId);
+      Alert.alert("Connected", "Successfully connected to device");
+    } catch (error: any) {
+      Alert.alert("Connection Failed", error.message || "Could not connect to device");
+    }
   };
 
-  const handleDisconnect = () => {
-    setConnectedDevice(null);
-    setIsConnected(false);
+  const handleDisconnect = async () => {
+    try {
+      await bluetoothActions.disconnect();
+    } catch (error: any) {
+      Alert.alert("Disconnect Failed", error.message || "Could not disconnect");
+    }
   };
 
   const getSignalStrength = (rssi: number) => {
     if (rssi > -50) return "Excellent";
     if (rssi > -70) return "Good";
     return "Fair";
+  };
+
+  const getBleStateText = (state: State) => {
+    switch (state) {
+      case State.PoweredOn:
+        return "Ready";
+      case State.PoweredOff:
+        return "Bluetooth Off";
+      case State.Unauthorized:
+        return "No Permission";
+      case State.Unsupported:
+        return "Not Supported";
+      default:
+        return "Unknown";
+    }
   };
 
   return (
@@ -86,6 +118,9 @@ export default function ConnectScreen() {
           ]}
         >
           <ThemedText type="title">Connect</ThemedText>
+          <ThemedText style={[styles.bleState, { color: colors.textSecondary }]}>
+            {getBleStateText(bluetoothState.bleState)}
+          </ThemedText>
         </View>
 
         {/* Connection Status Card */}
@@ -100,16 +135,18 @@ export default function ConnectScreen() {
                 style={[
                   styles.statusIndicator,
                   {
-                    backgroundColor: isConnected ? colors.success : colors.textDisabled,
+                    backgroundColor: bluetoothState.isConnected
+                      ? colors.success
+                      : colors.textDisabled,
                   },
                 ]}
               />
               <ThemedText type="defaultSemiBold">
-                {isConnected ? "Connected" : "Disconnected"}
+                {bluetoothState.isConnected ? "Connected" : "Disconnected"}
               </ThemedText>
             </View>
 
-            {isConnected && connectedDevice ? (
+            {bluetoothState.isConnected && bluetoothState.connectedDevice ? (
               <>
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
                 <View style={styles.deviceInfo}>
@@ -117,19 +154,23 @@ export default function ConnectScreen() {
                     <ThemedText style={[styles.deviceLabel, { color: colors.textSecondary }]}>
                       Device
                     </ThemedText>
-                    <ThemedText type="defaultSemiBold">{connectedDevice.name}</ThemedText>
+                    <ThemedText type="defaultSemiBold">
+                      {bluetoothState.connectedDevice.name}
+                    </ThemedText>
                   </View>
                   <View style={styles.deviceRow}>
                     <ThemedText style={[styles.deviceLabel, { color: colors.textSecondary }]}>
                       Type
                     </ThemedText>
-                    <ThemedText>Bluetooth</ThemedText>
+                    <ThemedText>Bluetooth LE</ThemedText>
                   </View>
                   <View style={styles.deviceRow}>
                     <ThemedText style={[styles.deviceLabel, { color: colors.textSecondary }]}>
                       Signal
                     </ThemedText>
-                    <ThemedText>{getSignalStrength(connectedDevice.rssi)}</ThemedText>
+                    <ThemedText>
+                      {getSignalStrength(bluetoothState.connectedDevice.rssi)}
+                    </ThemedText>
                   </View>
                 </View>
                 <Pressable
@@ -146,34 +187,52 @@ export default function ConnectScreen() {
             ) : (
               <>
                 <ThemedText style={[styles.statusDescription, { color: colors.textSecondary }]}>
-                  No device connected. Scan for nearby devices to connect.
+                  No device connected. Scan for nearby mesh devices to connect.
                 </ThemedText>
                 <Pressable
                   style={({ pressed }) => [
                     styles.actionButton,
                     { backgroundColor: colors.primary },
                     pressed && { opacity: 0.8 },
+                    bluetoothState.isScanning && { opacity: 0.6 },
                   ]}
                   onPress={handleScan}
-                  disabled={isScanning}
+                  disabled={bluetoothState.isScanning || bluetoothState.bleState !== State.PoweredOn}
                 >
-                  <ThemedText style={styles.actionButtonText}>
-                    {isScanning ? "Scanning..." : "Scan for Devices"}
-                  </ThemedText>
+                  {bluetoothState.isScanning ? (
+                    <View style={styles.scanningRow}>
+                      <ActivityIndicator color="#ffffff" size="small" />
+                      <ThemedText style={styles.actionButtonText}>Scanning...</ThemedText>
+                    </View>
+                  ) : (
+                    <ThemedText style={styles.actionButtonText}>Scan for Devices</ThemedText>
+                  )}
                 </Pressable>
+                {bluetoothState.isScanning && (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.stopButton,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={bluetoothActions.stopScan}
+                  >
+                    <ThemedText style={{ color: colors.text }}>Stop Scan</ThemedText>
+                  </Pressable>
+                )}
               </>
             )}
           </View>
         </View>
 
         {/* Discovered Devices */}
-        {discoveredDevices.length > 0 && (
+        {bluetoothState.discoveredDevices.length > 0 && !bluetoothState.isConnected && (
           <View style={styles.section}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
-              Nearby Devices
+              Nearby Devices ({bluetoothState.discoveredDevices.length})
             </ThemedText>
             
-            {discoveredDevices.map((device) => (
+            {bluetoothState.discoveredDevices.map((device) => (
               <Pressable
                 key={device.id}
                 style={({ pressed }) => [
@@ -181,7 +240,7 @@ export default function ConnectScreen() {
                   { backgroundColor: colors.surface },
                   pressed && { opacity: 0.7 },
                 ]}
-                onPress={() => handleConnect(device)}
+                onPress={() => handleConnect(device.id)}
               >
                 <View style={styles.deviceCardContent}>
                   <IconSymbol
@@ -190,9 +249,9 @@ export default function ConnectScreen() {
                     color={colors.primary}
                   />
                   <View style={styles.deviceCardInfo}>
-                    <ThemedText type="defaultSemiBold">{device.name}</ThemedText>
+                    <ThemedText type="defaultSemiBold">{device.name || "Unknown"}</ThemedText>
                     <ThemedText style={[styles.deviceAddress, { color: colors.textSecondary }]}>
-                      {device.address}
+                      {device.id.substring(0, 17)}
                     </ThemedText>
                   </View>
                   <ThemedText style={[styles.deviceRssi, { color: colors.textSecondary }]}>
@@ -311,7 +370,7 @@ export default function ConnectScreen() {
                 styles.aboutRow,
                 pressed && { opacity: 0.7 },
               ]}
-              onPress={() => Linking.openURL("https://github.com/willbullen/MeshCore-Bridge")}
+              onPress={() => Linking.openURL("https://github.com/willbullen/MeshCore-Mobile")}
             >
               <ThemedText style={{ color: colors.textSecondary }}>GitHub</ThemedText>
               <View style={styles.aboutRowRight}>
@@ -327,7 +386,9 @@ export default function ConnectScreen() {
                 styles.aboutRow,
                 pressed && { opacity: 0.7 },
               ]}
-              onPress={() => Linking.openURL("https://github.com/willbullen/MeshCore-Bridge#readme")}
+              onPress={() =>
+                Linking.openURL("https://github.com/willbullen/MeshCore-Mobile#readme")
+              }
             >
               <ThemedText style={{ color: colors.textSecondary }}>Documentation</ThemedText>
               <View style={styles.aboutRowRight}>
@@ -353,6 +414,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bleState: {
+    fontSize: 13,
+    fontWeight: "600",
   },
   section: {
     paddingHorizontal: Spacing.lg,
@@ -399,6 +467,18 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  scanningRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  stopButton: {
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    borderWidth: 1,
+    marginTop: Spacing.sm,
   },
   deviceCard: {
     borderRadius: BorderRadius.md,

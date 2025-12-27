@@ -90,7 +90,7 @@
 - [x] Implement device connection management
 - [x] Add BLE state management (connected/disconnected)
 - [x] Create packet send/receive handlers
-- [ ] Update Connect tab with real BLE functionality
+- [x] Update Connect tab with real BLE functionality
 - [ ] Add connection status indicators across app
 
 ## Phase 11: MeshCore Protocol
@@ -152,3 +152,8 @@
 - [ ] Build production IPA
 - [ ] Create app store assets
 - [ ] Write deployment documentation
+
+## Repository Setup
+- [x] Create GitHub repository MeshCore-Mobile
+- [x] Push initial code to GitHub
+- [x] Configure repository settings
