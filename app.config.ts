@@ -16,7 +16,7 @@ const env = {
   appSlug: 'meshcore-mobile',
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: '',
+  logoUrl: 'https://files.manuscdn.com/user_upload_by_module/session_file/87842268/veuVntIJlyxXEfLD.png',
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -75,9 +75,9 @@ const config: ExpoConfig = {
         image: "./assets/images/splash-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#1a1a2e",
         dark: {
-          backgroundColor: "#000000",
+          backgroundColor: "#0a0a0a",
         },
       },
     ],

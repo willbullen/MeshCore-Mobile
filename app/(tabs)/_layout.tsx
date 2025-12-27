@@ -10,25 +10,54 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
+  const colors = Colors[colorScheme ?? "dark"];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
         tabBarButton: HapticTab,
-        // Ensure tab bar respects bottom safe area for devices with home indicators
         tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
           paddingBottom: insets.bottom,
-          height: 49 + insets.bottom, // Default tab bar height (49) + safe area
+          height: 49 + insets.bottom,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Messages",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="message.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="nodes"
+        options={{
+          title: "Nodes",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="antenna.radiowaves.left.and.right" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: "Map",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="connect"
+        options={{
+          title: "Connect",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="dot.radiowaves.left.and.right" color={color} />
+          ),
         }}
       />
     </Tabs>
