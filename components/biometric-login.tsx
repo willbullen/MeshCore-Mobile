@@ -155,10 +155,10 @@ export function BiometricLogin({ onAuthenticated }: BiometricLoginProps) {
 
         {/* App Name */}
         <ThemedText type="title" style={styles.title}>
-          MeshCore
+          Enviroscan
         </ThemedText>
         <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Secure Mesh Networking
+          Monitoring Network
         </ThemedText>
 
         {/* Biometric Icon */}

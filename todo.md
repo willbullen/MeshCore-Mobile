@@ -234,3 +234,9 @@
 - [x] Clear Metro bundler cache if needed
 - [x] Restart dev server to reload assets
 - [ ] Test login screen shows new Enviroscan branding
+
+## Update Login Screen Subtitle
+- [x] Change subtitle from 'Secure Mesh Networking' to 'Monitoring Network'
+- [x] Update biometric-login.tsx
+- [x] Fix title to show Enviroscan instead of MeshCore
+- [ ] Test changes in Expo Go
