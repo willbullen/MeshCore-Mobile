@@ -1,4 +1,4 @@
-# MeshCore Mobile App - TODO
+# Enviroscan Mobile App - TODO
 
 ## Phase 1: Foundation & Branding
 - [x] Update app.config.ts with MeshCore branding
@@ -226,3 +226,14 @@
 - [x] Add logout functionality
 - [x] Integrate login screen into app layout
 - [x] Add fallback PIN/password option
+
+## Rebranding to Enviroscan
+- [x] Replace app icon with new Enviroscan logo
+- [x] Copy icon to all required locations (splash, favicon, Android)
+- [x] Update app.config.ts with Enviroscan name and logo URL
+- [x] Update biometric login screen with Enviroscan branding
+- [x] Update intro screen with Enviroscan name
+- [x] Update all code references from MeshCore to Enviroscan
+- [x] Update README with Enviroscan branding
+- [ ] Update GitHub repository name and description
+- [ ] Push changes to GitHub
