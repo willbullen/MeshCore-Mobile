@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { getWebSocketService, initWebSocketService, type WebSocketMessage } from "@/lib/websocket-service";
 
 // Default backend URL - update this to match your Django backend
@@ -7,19 +7,27 @@ const DEFAULT_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://local
 export function useWebSocket() {
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<WebSocketMessage[]>([]);
-  const [wsService] = useState(() => {
+  
+  // Use useMemo to ensure wsService is only created once
+  const wsService = useMemo(() => {
     try {
       return getWebSocketService(DEFAULT_BACKEND_URL);
     } catch {
       return initWebSocketService(DEFAULT_BACKEND_URL);
     }
-  });
+  }, []);
 
   // Connect on mount
   useEffect(() => {
-    wsService.connect();
+    // Set initial connection state
+    setConnected(wsService.isConnected());
+    
+    // Connect if not already connected
+    if (!wsService.isConnected()) {
+      wsService.connect();
+    }
 
-    // Subscribe to connection state
+    // Subscribe to connection state changes
     const unsubscribeConnection = wsService.onConnectionChange((isConnected) => {
       setConnected(isConnected);
     });

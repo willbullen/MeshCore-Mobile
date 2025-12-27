@@ -186,5 +186,7 @@
 - [x] Implement message sync (send/receive)
 - [x] Add node telemetry sync
 - [x] Handle WebSocket reconnection
+- [x] Create useWebSocket React hook
+- [ ] Fix infinite loop issue in WebSocket hook
 - [ ] Update Messages tab to use backend sync
 - [ ] Update Nodes tab to fetch from backend

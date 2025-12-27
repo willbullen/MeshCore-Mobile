@@ -38,6 +38,8 @@ export default function ChatScreen() {
   // Bluetooth state and actions
   const [bluetoothState, bluetoothActions] = useBluetooth();
   
+  // TODO: Add WebSocket integration for backend message sync
+  
   // Find the node and messages
   const node = mockNodes.find((n) => n.nodeHash === nodeHash);
   const mockMessages = node ? getMessagesForNode(nodeHash) : [];

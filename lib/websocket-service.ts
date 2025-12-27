@@ -202,8 +202,8 @@ class WebSocketService {
   onConnectionChange(callback: ConnectionStateCallback): () => void {
     this.connectionCallbacks.push(callback);
     
-    // Immediately notify current state
-    callback(this.isConnected());
+    // Don't immediately notify - let the hook set initial state
+    // This prevents infinite re-render loops
     
     // Return unsubscribe function
     return () => {
