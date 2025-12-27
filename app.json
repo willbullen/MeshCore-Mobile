@@ -37,7 +37,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.willbullen.enviroscan",
       "permissions": [
-        "POST_NOTIFICATIONS",
         "BLUETOOTH",
         "BLUETOOTH_ADMIN",
         "BLUETOOTH_CONNECT",

@@ -322,3 +322,8 @@
 - [x] Fix useScrollOffset -> useScrollViewOffset API change
 - [ ] Test app still works
 - [ ] Test Expo Launch build
+
+## Remove Push Notifications to Fix iOS Build
+- [x] Remove expo-notifications from package.json
+- [x] Remove POST_NOTIFICATIONS permission from app.json
+- [ ] Test build with Expo Launch
