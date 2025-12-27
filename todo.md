@@ -240,3 +240,8 @@
 - [x] Update biometric-login.tsx
 - [x] Fix title to show Enviroscan instead of MeshCore
 - [ ] Test changes in Expo Go
+
+## Update Intro Screen Subtitle for Brand Consistency
+- [x] Change intro screen subtitle from 'Decentralized Mesh Network' to 'Monitoring Network'
+- [x] Update intro-screen.tsx
+- [x] Fix title to show Enviroscan instead of MeshCore

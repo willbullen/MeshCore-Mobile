@@ -115,10 +115,10 @@ export function IntroScreen({ onFinish }: IntroScreenProps) {
         {/* Animated Text */}
         <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
           <ThemedText type="title" style={styles.title}>
-            MeshCore
+            Enviroscan
           </ThemedText>
           <ThemedText style={styles.subtitle}>
-            Decentralized Mesh Network
+            Monitoring Network
           </ThemedText>
         </Animated.View>
 
