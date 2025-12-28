@@ -337,3 +337,10 @@
 - [ ] Install expo-build-properties
 - [ ] Add extraPods configuration to disable Folly coroutines
 - [ ] Test build
+
+## iOS Build via GitHub Actions (Alternative to Expo Launch)
+- [ ] Create .github/workflows directory
+- [ ] Create iOS build workflow file with Xcode 15.4
+- [ ] Configure Apple certificates and provisioning profiles as GitHub secrets
+- [ ] Test GitHub Actions build and troubleshoot any issues
+- [ ] Submit successful build to App Store Connect
