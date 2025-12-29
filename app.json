@@ -71,7 +71,16 @@
             "extraPodfileProperties": {
               "CLANG_CXX_LANGUAGE_STANDARD": "c++20"
             },
-            "ccacheEnabled": false
+            "ccacheEnabled": false,
+            "deploymentTarget": "13.4",
+            "extraPods": [
+              {
+                "name": "RCT-Folly",
+                "configurations": ["Debug", "Release"],
+                "modular_headers": true,
+                "compiler_flags": "-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1"
+              }
+            ]
           }
         }
       ],

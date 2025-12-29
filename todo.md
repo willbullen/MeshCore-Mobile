@@ -344,3 +344,9 @@
 - [ ] Configure Apple certificates and provisioning profiles as GitHub secrets
 - [ ] Test GitHub Actions build and troubleshoot any issues
 - [ ] Submit successful build to App Store Connect
+
+## Podfile Workaround for Folly Coroutine Issue
+- [ ] Create custom Podfile with post_install hook to disable Folly coroutines
+- [ ] Add compiler flags to prevent Xcode 16/26 coroutine errors
+- [ ] Test build with EAS Build
+- [ ] If successful, submit to App Store
