@@ -1,0 +1,23 @@
+EAS Build Error - Install pods phase failed
+
+Build ID: b259bb9b-511a-49a4-bda5-65dac64454e6
+Build #: 2 (1.0.0)
+Git ref: 79f7be7
+Date: Dec 28, 2025 7:48 PM
+
+Error message:
+"Build failed: Unknown error. See logs of the Install pods build phase for more information."
+
+The error occurred during the "Install pods" step which took 5 seconds.
+
+This is consistent with the Folly coroutine header error we've been encountering.
+The build is using EAS Build cloud infrastructure which appears to be using Xcode 16/26 beta
+that has the incompatibility with React Native's Folly library.
+
+Key observation:
+- Even though we specified macos-sonoma-14.5-xcode-15.4 in eas.json for GitHub Actions,
+  the EAS Build cloud service itself (triggered by GitHub Actions) is using its own
+  infrastructure which may be running Xcode 16/26.
+
+The GitHub Actions workflow successfully submitted the build to EAS, but EAS Build's
+own infrastructure is where the actual compilation happens, and that's where it's failing.

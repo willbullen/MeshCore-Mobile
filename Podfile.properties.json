@@ -1,0 +1,7 @@
+{
+  "expo": {
+    "ios": {
+      "deploymentTarget": "13.4"
+    }
+  }
+}
