@@ -345,9 +345,9 @@
 - [ ] Test GitHub Actions build and troubleshoot any issues
 - [ ] Submit successful build to App Store Connect
 
-## Downgrade to Expo SDK 53
-- [ ] Downgrade expo package to SDK 53
-- [ ] Update all Expo dependencies to SDK 53 versions
-- [ ] Remove Expo SDK 54 specific configurations
+## Downgrade to Expo SDK 52 (Perplexity Recommended)
+- [ ] Downgrade expo package to SDK 52
+- [ ] Update all Expo dependencies to SDK 52 versions
+- [ ] Configure expo-build-properties with useFrameworks: static
 - [ ] Test build with EAS Build
 - [ ] If successful, submit to App Store
