@@ -368,9 +368,3 @@
 ## npm Switch Attempt (Failed)
 - [x] Switched from pnpm to npm
 - [x] Result: Dependency error - Cannot find module 'ajv/dist/compile/codegen'
-
-## Android Build Test
-- [ ] Update GitHub Actions workflow to build Android
-- [ ] Trigger Android build via GitHub Actions
-- [ ] Monitor EAS Build for Android
-- [ ] If successful, download and test APK
