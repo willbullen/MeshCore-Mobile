@@ -345,9 +345,26 @@
 - [ ] Test GitHub Actions build and troubleshoot any issues
 - [ ] Submit successful build to App Store Connect
 
-## Downgrade to Expo SDK 52 (Perplexity Recommended)
-- [ ] Downgrade expo package to SDK 52
-- [ ] Update all Expo dependencies to SDK 52 versions
-- [ ] Configure expo-build-properties with useFrameworks: static
+## Downgrade to Expo SDK 51 (Most Stable - Perplexity Confirmed)
+- [ ] Downgrade expo package to SDK 51
+- [ ] Update all Expo dependencies to SDK 51 versions
 - [ ] Test build with EAS Build
 - [ ] If successful, submit to App Store
+
+## SDK 52 Fix Attempts (Failed)
+- [x] Downgraded expo-modules-core to 2.2.0
+- [x] Set Node.js 22.15.0 in eas.json
+- [x] Cleared pnpm store and reinstalled
+- [x] Result: Still failed with TypeScript .ts extension error
+
+## Downgrade to Expo SDK 50 (Perplexity Confirmed Most Stable)
+- [ ] Remove npm files and switch back to pnpm
+- [ ] Downgrade to Expo SDK 50
+- [ ] Run expo-doctor health check
+- [ ] Update GitHub Actions workflow back to pnpm
+- [ ] Test build with EAS Build (with --clear-cache)
+- [ ] If successful, submit to App Store
+
+## npm Switch Attempt (Failed)
+- [x] Switched from pnpm to npm
+- [x] Result: Dependency error - Cannot find module 'ajv/dist/compile/codegen'
