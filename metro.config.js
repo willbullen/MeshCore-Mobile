@@ -12,6 +12,7 @@ const { getDefaultConfig } = require('expo/metro-config');
 const defaultConfig = getDefaultConfig(__dirname);
 
 const config = {
+  ...defaultConfig,
   resolver: {
     ...defaultConfig.resolver,
     // Enable symlink resolution for pnpm
@@ -24,6 +25,17 @@ const config = {
           path.join(__dirname, 'node_modules', String(name)),
       }
     ),
+    // Fix for missing-asset-registry-path on web
+    resolveRequest: (context, moduleName, platform) => {
+      if (moduleName === 'missing-asset-registry-path') {
+        return {
+          type: 'empty',
+        };
+      }
+      // Use default resolution for everything else
+      // @ts-ignore - Metro resolver type
+      return defaultConfig.resolver.resolveRequest?.(context, moduleName, platform) || context.resolveRequest(context, moduleName, platform);
+    },
   },
 };
 
