@@ -1,0 +1,328 @@
+# MeshCore Mobile - Cursor Rules
+
+You are an expert developer proficient in TypeScript, React Native, Expo SDK 54, and mobile UI development with a focus on mesh networking, Bluetooth Low Energy (BLE), and IoT applications.
+
+## Project Context
+
+MeshCore Mobile (Enviroscan) is a React Native mobile application that serves as a companion interface for MeshCore mesh networking devices. The app communicates with mesh network nodes via Bluetooth Low Energy (BLE) or WebSocket connections to a MeshCore Bridge server.
+
+### Key Technologies
+- **Framework**: Expo SDK 54, React Native 0.81, React 19
+- **Language**: TypeScript 5.9 with strict mode
+- **Navigation**: Expo Router 6 (file-based routing)
+- **State Management**: TanStack React Query 5, AsyncStorage
+- **Animations**: React Native Reanimated 4, Gesture Handler
+- **Connectivity**: React Native BLE PLX, WebSocket
+- **Database**: Drizzle ORM with MySQL (server-side)
+- **API**: tRPC 11 with Zod validation
+- **Build**: EAS Build, Metro Bundler
+
+## Code Style and Structure
+
+Write concise, technical TypeScript code with accurate examples. Use functional and declarative programming patterns; avoid classes. Prefer iteration and modularization over code duplication. Use descriptive variable names with auxiliary verbs (e.g., `isConnected`, `hasMessages`, `isScanning`).
+
+Structure files with exported components, subcomponents, helpers, static content, and types. Favor named exports for components and functions. Use lowercase with dashes for directory names (e.g., `components/connection-status`).
+
+### File Organization
+```
+app/                    # Expo Router screens
+  (tabs)/               # Tab navigation screens
+components/             # Reusable UI components
+constants/              # App constants and theme
+hooks/                  # Custom React hooks
+lib/                    # Core services (BLE, WebSocket, protocol)
+shared/                 # Shared types and utilities
+```
+
+## TypeScript Usage
+
+Use TypeScript for all code; prefer interfaces over types for object shapes. Avoid enums; use literal types or maps instead. Implement functional components with TypeScript interfaces for props. Use strict mode for better type safety.
+
+```typescript
+// Preferred: Interface for props
+interface NodeCardProps {
+  node: Node;
+  onPress: (nodeHash: string) => void;
+  isSelected?: boolean;
+}
+
+// Preferred: Literal types over enums
+type NodeType = 'chat' | 'repeater' | 'room_server' | 'sensor' | 'companion';
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+```
+
+## Naming Conventions
+
+- **Variables and Functions**: Use camelCase with auxiliary verbs (e.g., `isLoading`, `handleConnect`, `fetchNodes`)
+- **Components**: Use PascalCase (e.g., `NodeCard`, `ConnectionStatusBanner`)
+- **Directories**: Use lowercase with dashes (e.g., `connection-status`, `node-detail`)
+- **Hooks**: Prefix with `use` (e.g., `useBluetooth`, `useWebSocket`, `useMeshCore`)
+- **Services**: Suffix with `Service` (e.g., `BLEService`, `WebSocketService`)
+
+## UI and Styling
+
+Use Expo's built-in components and ThemedText/ThemedView for consistent dark/light mode support. Implement responsive design with Flexbox and safe area handling. Follow Apple Human Interface Guidelines for iOS-native feel.
+
+### Safe Area Management
+```typescript
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+function MyScreen() {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <View style={{
+      paddingTop: Math.max(insets.top, 20),
+      paddingBottom: Math.max(insets.bottom, 20),
+    }}>
+      {/* Content */}
+    </View>
+  );
+}
+```
+
+### Design System
+- **Colors**: Use theme colors from `constants/theme.ts`
+- **Spacing**: 8pt grid system (8, 12, 16, 24, 32)
+- **Typography**: 4-5 sizes (title 28pt, subtitle 20pt, body 16pt, caption 13pt)
+- **Border Radius**: Consistent values (sm: 8, md: 12, lg: 16)
+- **Touch Targets**: Minimum 44x44 points
+
+## BLE Development Guidelines
+
+When working with Bluetooth Low Energy:
+
+```typescript
+// Always check permissions before scanning
+const hasPermissions = await BLEService.requestPermissions();
+if (!hasPermissions) {
+  // Handle permission denial gracefully
+  return;
+}
+
+// Use proper cleanup in useEffect
+useEffect(() => {
+  const subscription = device.monitorCharacteristicForService(
+    SERVICE_UUID,
+    CHARACTERISTIC_UUID,
+    (error, characteristic) => {
+      if (error) {
+        console.error('BLE notification error:', error);
+        return;
+      }
+      // Handle data
+    }
+  );
+
+  return () => subscription.remove();
+}, [device]);
+```
+
+### BLE Best Practices
+- Always request permissions before BLE operations
+- Handle connection state changes gracefully
+- Implement reconnection logic with exponential backoff
+- Use proper MTU negotiation for larger packets
+- Clean up subscriptions in useEffect cleanup functions
+
+## MeshCore Protocol
+
+When encoding/decoding MeshCore packets:
+
+```typescript
+// Packet structure
+interface MeshCorePacket {
+  header: PacketHeader;
+  transportCodes?: [number, number];
+  path: Uint8Array[];
+  payload: Uint8Array;
+}
+
+// Always validate packet data before processing
+function parsePacket(data: Uint8Array): MeshCorePacket | null {
+  if (data.length < 2) {
+    console.warn('Packet too short');
+    return null;
+  }
+  // Parse packet...
+}
+```
+
+## State Management
+
+Use TanStack React Query for server state and data fetching. Use React Context for global app state (connection status, user preferences). Minimize useState and useEffect; prefer derived state and memoization.
+
+```typescript
+// Preferred: React Query for data fetching
+const { data: nodes, isLoading, refetch } = useQuery({
+  queryKey: ['nodes'],
+  queryFn: fetchNodes,
+  staleTime: 30000,
+});
+
+// Preferred: useMemo for derived state
+const onlineNodes = useMemo(
+  () => nodes?.filter(node => node.isOnline) ?? [],
+  [nodes]
+);
+```
+
+## Navigation
+
+Use Expo Router for file-based navigation. Follow the established tab structure:
+
+```typescript
+// Tab navigation structure
+app/(tabs)/
+  index.tsx        // Messages (Home)
+  nodes.tsx        // Nodes list
+  map.tsx          // Map view
+  dashboard.tsx    // Dashboard
+  connect.tsx      // Settings/Connect
+```
+
+Use typed routes for navigation:
+
+```typescript
+import { router } from 'expo-router';
+
+// Navigate with type safety
+router.push('/chat');
+router.push({ pathname: '/node-detail', params: { nodeHash } });
+```
+
+## Performance Optimization
+
+- Use FlatList for lists, never ScrollView with .map()
+- Memoize components with React.memo() when receiving objects/arrays
+- Use useCallback for event handlers passed to child components
+- Use useMemo for expensive computations
+- Avoid inline styles; use StyleSheet.create()
+- Optimize images with expo-image
+
+```typescript
+// Preferred: Memoized list item
+const NodeItem = React.memo(({ node, onPress }: NodeItemProps) => (
+  <Pressable onPress={() => onPress(node.nodeHash)}>
+    <ThemedText>{node.name}</ThemedText>
+  </Pressable>
+));
+
+// Preferred: Memoized callback
+const handleNodePress = useCallback((nodeHash: string) => {
+  router.push({ pathname: '/node-detail', params: { nodeHash } });
+}, []);
+```
+
+## Error Handling
+
+Prioritize error handling and edge cases. Handle errors at the beginning of functions. Use early returns for error conditions. Implement proper error logging.
+
+```typescript
+async function connectToDevice(deviceId: string): Promise<Device | null> {
+  // Early return for invalid input
+  if (!deviceId) {
+    console.error('Invalid device ID');
+    return null;
+  }
+
+  try {
+    const device = await BLEService.connect(deviceId);
+    return device;
+  } catch (error) {
+    console.error('Connection failed:', error);
+    // Show user-friendly error message
+    Alert.alert('Connection Failed', 'Unable to connect to device. Please try again.');
+    return null;
+  }
+}
+```
+
+## Testing
+
+Write unit tests for critical components and services. Use Jest and React Native Testing Library. Mock native modules (BLE, AsyncStorage) for testing.
+
+```typescript
+// Example test structure
+describe('BLEService', () => {
+  it('should request permissions before scanning', async () => {
+    const result = await BLEService.startScan();
+    expect(mockRequestPermissions).toHaveBeenCalled();
+  });
+});
+```
+
+## Animations
+
+Use React Native Reanimated for performant animations. Prefer worklet-based animations that run on the UI thread.
+
+```typescript
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+
+function AnimatedComponent() {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = () => {
+    scale.value = withSpring(1.1, {}, () => {
+      scale.value = withSpring(1);
+    });
+  };
+
+  return (
+    <Pressable onPress={handlePress}>
+      <Animated.View style={animatedStyle}>
+        {/* Content */}
+      </Animated.View>
+    </Pressable>
+  );
+}
+```
+
+## WebSocket Communication
+
+When working with WebSocket connections to MeshCore Bridge:
+
+```typescript
+// Message format
+interface WebSocketMessage {
+  type: 'message' | 'node_update' | 'telemetry' | 'ping' | 'pong';
+  data: Record<string, unknown>;
+}
+
+// Implement reconnection with exponential backoff
+const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
+```
+
+## Key Conventions
+
+1. **Mobile-First**: Design for one-handed use with thumb-zone accessibility
+2. **Offline-First**: Use AsyncStorage for local persistence, sync when connected
+3. **Battery-Conscious**: Minimize BLE scanning, use efficient polling intervals
+4. **Accessibility**: Support VoiceOver/TalkBack, minimum 44pt touch targets
+5. **Dark Mode**: All UI must support both light and dark themes
+6. **Error Recovery**: Graceful degradation when BLE/WebSocket unavailable
+
+## Documentation References
+
+- Expo SDK 54: https://docs.expo.dev/
+- React Native BLE PLX: https://dotintent.github.io/react-native-ble-plx/
+- Expo Router: https://docs.expo.dev/router/introduction/
+- Reanimated 4: https://docs.swmansion.com/react-native-reanimated/
+- TanStack Query: https://tanstack.com/query/latest
+
+## Output Expectations
+
+- Provide code snippets that align with the guidelines above
+- Include brief explanations for complex implementations
+- Ensure all code is clear, correct, and production-ready
+- Demonstrate adherence to best practices in performance, security, and maintainability
+- Consider BLE-specific edge cases (disconnections, permission denials, low battery)
+- Test on both iOS and Android platforms
