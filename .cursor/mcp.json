@@ -1,0 +1,80 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/specification/main/schema/mcp.schema.json",
+  "mcpServers": {
+    "expo-mcp": {
+      "url": "https://mcp.expo.dev/mcp",
+      "description": "Expo MCP Server - Learn Expo, manage dependencies, automate visual verification and testing. Requires EAS paid plan.",
+      "documentation": "https://docs.expo.dev/eas/ai/mcp/"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub integration for issues, PRs, and repository management",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/github"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "description": "Secure filesystem access for reading, writing, and managing project files",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "description": "Knowledge graph-based persistent memory for maintaining context across sessions",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory"
+    },
+    "drizzle": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "drizzle-mcp"
+      ],
+      "description": "Drizzle ORM database operations and drizzle-kit CLI tools",
+      "documentation": "https://github.com/defrex/drizzle-mcp"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Dynamic problem-solving through thought sequences for complex debugging and architecture decisions",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking"
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      },
+      "description": "Web and local search using Brave Search API for documentation and troubleshooting",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search"
+    },
+    "fetch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
+      "description": "Fetch and convert web content to markdown for reading documentation",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch"
+    }
+  }
+}
