@@ -10,7 +10,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "manus20251226202925",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "extra": {
       "eas": {
         "projectId": "e8eec2ce-70f8-49e7-bf01-2360cef376d6"
@@ -26,6 +25,8 @@
         ],
         "NSBluetoothAlwaysUsageDescription": "Enviroscan needs Bluetooth to connect to mesh network devices.",
         "NSBluetoothPeripheralUsageDescription": "Enviroscan needs Bluetooth to connect to mesh network devices.",
+        "NSLocationWhenInUseUsageDescription": "Enviroscan needs location access to display node positions on the map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Enviroscan needs location access to display node positions on the map.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -69,6 +70,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
       "react-native-ble-plx",
       [
         "expo-build-properties",

@@ -1,0 +1,12 @@
+# Ignore files that don't need to be uploaded to EAS
+node_modules/**/*
+.expo/*
+.expo-shared/*
+dist/*
+*.log
+.git/*
+.vscode/*
+.idea/*
+*.DS_Store
+android/*
+ios/*
