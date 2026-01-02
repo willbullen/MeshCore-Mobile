@@ -8,6 +8,7 @@ import {
   View,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,119 +17,129 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useBluetooth } from "@/hooks/use-bluetooth";
-import { PacketType, type MeshPacket } from "@/lib/meshcore-protocol";
-import {
-  mockNodes,
-  getMessagesForNode,
-  formatRelativeTime,
-  type Message,
-} from "@/constants/mock-data";
+import { useMessages } from "@/hooks/use-messages";
+import { storageService, type StoredMessage } from "@/lib/storage-service";
+import { formatRelativeTime } from "@/constants/mock-data";
 
 export default function ChatScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "dark"];
   const insets = useSafeAreaInsets();
-  const { nodeHash } = useLocalSearchParams<{ nodeHash: string }>();
+  const { nodeHash, nodeName } = useLocalSearchParams<{ nodeHash: string; nodeName?: string }>();
   
   const [messageText, setMessageText] = useState("");
-  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<StoredMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [node, setNode] = useState<{ name: string; isOnline: boolean; lastSeen: number } | null>(null);
   const flatListRef = useRef<FlatList>(null);
   
-  // Bluetooth state and actions
-  const [bluetoothState, bluetoothActions] = useBluetooth();
+  // Messages hook
+  const [messagesState, messagesActions] = useMessages();
   
-  // TODO: Add WebSocket integration for backend message sync
-  
-  // Find the node and messages
-  const node = mockNodes.find((n) => n.nodeHash === nodeHash);
-  const mockMessages = node ? getMessagesForNode(nodeHash) : [];
-  
-  // Combine mock messages with local messages
-  const messages = [...mockMessages, ...localMessages].sort(
-    (a, b) => {
-      const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : a.timestamp;
-      const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : b.timestamp;
-      return aTime - bTime;
-    }
-  );
-  
-  // My node (Base Station)
-  const myNodeHash = "a1b2c3d4";
+  // Get current user's node hash from preferences
+  const [myNodeHash, setMyNodeHash] = useState<string>("local-device");
 
+  // Load user preferences and messages on mount
   useEffect(() => {
-    // Scroll to bottom when messages load
-    if (messages.length > 0) {
+    loadData();
+  }, [nodeHash]);
+
+  // Load messages and node data
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get user preferences
+      const prefs = await storageService.getPreferences();
+      if (prefs.nodeHash) {
+        setMyNodeHash(prefs.nodeHash);
+      }
+      
+      // Get node data
+      const nodeData = await storageService.getNode(nodeHash);
+      if (nodeData) {
+        setNode({
+          name: nodeData.name,
+          isOnline: nodeData.isOnline,
+          lastSeen: nodeData.lastSeen,
+        });
+      } else {
+        // Fallback to URL param or node hash
+        setNode({
+          name: nodeName || nodeHash.substring(0, 8),
+          isOnline: false,
+          lastSeen: Date.now(),
+        });
+      }
+      
+      // Get messages for this conversation
+      const conversationMessages = await messagesActions.getConversationMessages(nodeHash);
+      setMessages(conversationMessages);
+      
+      // Mark as read
+      await messagesActions.markAsRead(nodeHash);
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('[Chat] Error loading data:', error);
+      setIsLoading(false);
+    }
+  };
+
+  // Refresh messages when conversations update
+  useEffect(() => {
+    if (!isLoading) {
+      loadData();
+    }
+  }, [messagesState.conversations.length]);
+
+  // Scroll to bottom when messages load or update
+  useEffect(() => {
+    if (messages.length > 0 && !isLoading) {
       setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: false });
+        flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages.length]);
-  
-  // Listen for incoming messages
-  useEffect(() => {
-    const unsubscribe = bluetoothActions.onMessageReceived((packet: MeshPacket) => {
-      console.log("[Chat] Received packet:", packet);
-      
-      // Only process text messages for this conversation
-      if (packet.type === PacketType.TEXT_MESSAGE && packet.from === nodeHash) {
-        const senderNode = mockNodes.find((n) => n.nodeHash === packet.from);
-        if (!senderNode) return;
-        
-        const newMessage: Message = {
-          id: `ble-${packet.id}`,
-          sender: senderNode,
-          content: packet.payload.text,
-          messageType: "txt_msg",
-          timestamp: new Date(packet.timestamp),
-          status: "delivered",
-        };
-        
-        setLocalMessages((prev) => [...prev, newMessage]);
-      }
-    });
-    
-    return unsubscribe;
-  }, [nodeHash, bluetoothActions]);
+  }, [messages.length, isLoading]);
 
   const handleSend = async () => {
     if (messageText.trim() && nodeHash) {
       const text = messageText.trim();
       setMessageText("");
       
-      // Add optimistic message to UI
-      const myNode = mockNodes.find((n) => n.nodeHash === myNodeHash);
-      if (myNode) {
-        const optimisticMessage: Message = {
-          id: `local-${Date.now()}`,
-          sender: myNode,
-          recipient: node,
-          content: text,
-          messageType: "txt_msg",
-          timestamp: new Date(),
-          status: "queued",
-        };
-        setLocalMessages((prev) => [...prev, optimisticMessage]);
-      }
-      
-      // Send via Bluetooth if connected
-      if (bluetoothState.isConnected) {
-        try {
-          await bluetoothActions.sendMessage(nodeHash, text, 0);
-          console.log("[Chat] Message sent via Bluetooth");
-        } catch (error) {
-          console.error("[Chat] Failed to send message:", error);
-          // TODO: Update message status to failed
-        }
-      } else {
-        console.log("[Chat] Not connected, message queued locally");
-        // TODO: Queue message for later delivery
+      try {
+        // Send message via useMessages hook
+        await messagesActions.sendMessage(nodeHash, text, 0);
+        
+        // Reload messages
+        await loadData();
+        
+        console.log("[Chat] Message sent successfully");
+      } catch (error) {
+        console.error("[Chat] Failed to send message:", error);
+        // Message will show as failed in UI
       }
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMine = item.sender.nodeHash === myNodeHash;
+  // Memoize message item render function
+  const renderMessage = useCallback(({ item }: { item: StoredMessage }) => {
+    const isMine = item.isOutgoing;
+    
+    // Determine status icon
+    let statusIcon = "checkmark.circle";
+    let statusColor = "rgba(255,255,255,0.5)";
+    
+    if (item.status === "sent" || item.status === "delivered") {
+      statusIcon = "checkmark.circle.fill";
+      statusColor = "rgba(255,255,255,0.9)";
+    } else if (item.status === "failed") {
+      statusIcon = "exclamationmark.circle.fill";
+      statusColor = "#ef4444";
+    } else if (item.status === "read") {
+      statusIcon = "checkmark.circle.fill";
+      statusColor = "#22c55e";
+    }
     
     return (
       <View
@@ -145,9 +156,9 @@ export default function ChatScreen() {
               : { backgroundColor: colors.surface },
           ]}
         >
-          {!isMine && (
+          {!isMine && item.senderName && (
             <ThemedText style={[styles.senderName, { color: colors.accent }]}>
-              {item.sender.name}
+              {item.senderName}
             </ThemedText>
           )}
           <ThemedText style={[styles.messageText, { color: isMine ? "#ffffff" : colors.text }]}>
@@ -160,25 +171,43 @@ export default function ChatScreen() {
                 { color: isMine ? "rgba(255,255,255,0.7)" : colors.textSecondary },
               ]}
             >
-              {formatRelativeTime(item.timestamp)}
+              {formatRelativeTime(new Date(item.timestamp))}
             </ThemedText>
             {isMine && (
               <IconSymbol
-                name={item.status === "delivered" ? "checkmark.circle.fill" : "checkmark.circle.fill"}
+                name={statusIcon}
                 size={14}
-                color={item.status === "delivered" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)"}
+                color={statusColor}
               />
             )}
           </View>
         </View>
       </View>
     );
-  };
+  }, [colors]);
+  
+  // Memoized key extractor
+  const keyExtractor = useCallback((item: StoredMessage) => item.id, []);
+
+  if (isLoading) {
+    return (
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <ThemedText style={{ marginTop: Spacing.lg, color: colors.textSecondary }}>
+          Loading messages...
+        </ThemedText>
+      </ThemedView>
+    );
+  }
 
   if (!node) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText>Node not found</ThemedText>
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <IconSymbol name="exclamationmark.triangle" size={64} color={colors.textSecondary} />
+        <ThemedText style={{ marginTop: Spacing.lg }}>Node not found</ThemedText>
+        <Pressable onPress={() => router.back()} style={{ marginTop: Spacing.lg }}>
+          <ThemedText style={{ color: colors.primary }}>Go Back</ThemedText>
+        </Pressable>
       </ThemedView>
     );
   }
@@ -207,10 +236,10 @@ export default function ChatScreen() {
           <View style={styles.headerContent}>
             <ThemedText type="defaultSemiBold">{node.name}</ThemedText>
             <ThemedText style={[styles.headerSubtext, { color: colors.textSecondary }]}>
-              {node.isOnline ? "Online" : `Last seen ${formatRelativeTime(node.lastSeen)}`}
+              {node.isOnline ? "Online" : `Last seen ${formatRelativeTime(new Date(node.lastSeen))}`}
             </ThemedText>
           </View>
-          <Pressable style={styles.headerAction}>
+          <Pressable style={styles.headerAction} onPress={() => router.push({ pathname: '/node-detail', params: { nodeHash } })}>
             <IconSymbol name="info.circle.fill" size={24} color={colors.text} />
           </Pressable>
         </View>
@@ -220,8 +249,14 @@ export default function ChatScreen() {
           ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           contentContainerStyle={[styles.messagesList, { paddingBottom: insets.bottom }]}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={15}
+          windowSize={10}
+          inverted={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <IconSymbol name="message.fill" size={64} color={colors.textSecondary} />
@@ -284,6 +319,10 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   keyboardView: {
     flex: 1,

@@ -137,9 +137,9 @@ EXPO_PUBLIC_API_BASE_URL=https://your-api.com
 
 ## Local Preview
 
-### Option 1: Web Browser (Fastest - Limited Features)
+### Option 1: Web Browser (Fast - With Bluetooth Support! 🎉)
 
-Preview the app in your web browser. Some native features (Bluetooth, Maps) won't work.
+Preview the app in your web browser with **full Bluetooth functionality** using Web Bluetooth API!
 
 ```bash
 pnpm dev:metro
@@ -147,11 +147,27 @@ pnpm dev:metro
 
 Opens automatically at `http://localhost:8081`.
 
-**Limitations:**
-- ❌ Bluetooth (react-native-ble-plx) - requires development build
-- ❌ Maps - requires development build
+**Features on Web:**
+- ✅ **Bluetooth** - Works via Web Bluetooth API (Chrome, Edge, Opera)
+- ✅ **Maps** - Interactive Mapbox maps with markers and popups
 - ✅ UI/Navigation - Full support
 - ✅ Animations - Full support
+- ✅ Messaging - Full support with real BLE devices
+- ✅ Node Management - Full support
+- ✅ **Complete Functionality** - All features work in browser!
+
+**Browser Requirements:**
+- Chrome 56+ (recommended)
+- Edge 79+
+- Opera 43+
+- ❌ Safari (not supported - use native iOS app)
+
+**Web-Specific Guides:**
+- 🔵 [Web Bluetooth Guide](docs/WEB_BLUETOOTH_GUIDE.md) - Connect BLE devices in browser
+- 🗺️ [Web Mapbox Setup](docs/WEB_MAPBOX_SETUP.md) - Interactive maps on web
+- 🌐 [Web App Features](docs/WEB_APP_FEATURES.md) - Complete feature overview
+
+**Note**: Web features require user interaction (security) and HTTPS in production (localhost OK for dev).
 
 ### Option 2: Expo Go on Physical Device (Quick Testing)
 

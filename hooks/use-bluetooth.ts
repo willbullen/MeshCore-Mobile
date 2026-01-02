@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { bleService, State, type BLEDevice } from "@/lib/ble-service";
 import { meshProtocol, type MeshPacket } from "@/lib/meshcore-protocol";
 
@@ -34,9 +34,8 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
     error: bleAvailable ? null : "BLE requires development build",
   });
 
-  const [messageCallbacks, setMessageCallbacks] = useState<Array<(packet: MeshPacket) => void>>(
-    []
-  );
+  // Use ref instead of state to avoid triggering re-renders when callbacks change
+  const messageCallbacksRef = useRef<Array<(packet: MeshPacket) => void>>([]);
 
   // Monitor BLE state
   useEffect(() => {
@@ -64,15 +63,15 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
       if (packet) {
         console.log("[useBluetooth] Decoded packet:", packet);
         
-        // Notify all callbacks
-        messageCallbacks.forEach((callback) => callback(packet));
+        // Notify all callbacks using ref
+        messageCallbacksRef.current.forEach((callback) => callback(packet));
       }
     });
 
     return () => {
       subscription.remove();
     };
-  }, [messageCallbacks]);
+  }, []); // Empty dependency array - effect runs once
 
   // Start scanning for devices
   const startScan = useCallback(async () => {
@@ -114,7 +113,7 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
         error: error.message || "Failed to start scan",
       }));
     }
-  }, []);
+  }, [bleAvailable]);
 
   // Stop scanning
   const stopScan = useCallback(() => {
@@ -131,18 +130,27 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
     try {
       setState((prev) => ({ ...prev, error: null }));
 
-      // Stop scanning first
-      if (state.isScanning) {
-        stopScan();
-      }
+      // Stop scanning first using functional update
+      setState((prev) => {
+        if (prev.isScanning) {
+          bleService.stopScan();
+          return { ...prev, isScanning: false };
+        }
+        return prev;
+      });
 
-      const device = state.discoveredDevices.find((d) => d.id === deviceId);
+      // Get device from current state
+      let deviceToConnect: BLEDevice | null = null;
+      setState((prev) => {
+        deviceToConnect = prev.discoveredDevices.find((d) => d.id === deviceId) || null;
+        return prev;
+      });
       
       await bleService.connect(deviceId, (connected) => {
         setState((prev) => ({
           ...prev,
           isConnected: connected,
-          connectedDevice: connected ? device || null : null,
+          connectedDevice: connected ? deviceToConnect : null,
         }));
       });
 
@@ -154,7 +162,7 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
         error: error.message || "Failed to connect",
       }));
     }
-  }, [state.isScanning, state.discoveredDevices, stopScan]);
+  }, [bleAvailable]);
 
   // Disconnect from device
   const disconnect = useCallback(async () => {
@@ -183,11 +191,20 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
       }
       
       try {
-        if (!state.isConnected || !state.connectedDevice) {
+        // Get connection state and device from current state
+        let from: string | null = null;
+        let isConnected = false;
+        
+        setState((prev) => {
+          isConnected = prev.isConnected;
+          from = prev.connectedDevice?.id || null;
+          return prev;
+        });
+        
+        if (!isConnected || !from) {
           throw new Error("Not connected to a device");
         }
 
-        const from = state.connectedDevice.id;
         const encodedPacket = meshProtocol.encodeTextMessage(from, to, text, channel);
         
         await bleService.sendData(encodedPacket);
@@ -201,18 +218,27 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
         throw error;
       }
     },
-    [state.isConnected, state.connectedDevice]
+    [bleAvailable]
   );
 
   // Send position update
   const sendPosition = useCallback(
     async (to: string, lat: number, lon: number) => {
       try {
-        if (!state.isConnected || !state.connectedDevice) {
+        // Get connection state and device from current state
+        let from: string | null = null;
+        let isConnected = false;
+        
+        setState((prev) => {
+          isConnected = prev.isConnected;
+          from = prev.connectedDevice?.id || null;
+          return prev;
+        });
+        
+        if (!isConnected || !from) {
           throw new Error("Not connected to a device");
         }
 
-        const from = state.connectedDevice.id;
         const encodedPacket = meshProtocol.encodePosition(from, to, lat, lon);
         
         await bleService.sendData(encodedPacket);
@@ -226,19 +252,21 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
         throw error;
       }
     },
-    [state.isConnected, state.connectedDevice]
+    []
   );
 
   // Register callback for received messages
   const onMessageReceived = useCallback((callback: (packet: MeshPacket) => void) => {
-    setMessageCallbacks((prev) => [...prev, callback]);
+    // Use ref instead of state to avoid re-renders
+    messageCallbacksRef.current = [...messageCallbacksRef.current, callback];
     
     return () => {
-      setMessageCallbacks((prev) => prev.filter((cb) => cb !== callback));
+      messageCallbacksRef.current = messageCallbacksRef.current.filter((cb) => cb !== callback);
     };
   }, []);
 
-  const actions: BluetoothActions = {
+  // Memoize actions object to prevent infinite re-renders
+  const actions: BluetoothActions = useMemo(() => ({
     startScan,
     stopScan,
     connect,
@@ -246,7 +274,7 @@ export function useBluetooth(): [BluetoothState, BluetoothActions] {
     sendMessage,
     sendPosition,
     onMessageReceived,
-  };
+  }), [startScan, stopScan, connect, disconnect, sendMessage, sendPosition, onMessageReceived]);
 
   return [state, actions];
 }

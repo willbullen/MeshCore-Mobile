@@ -1,11 +1,12 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,14 +16,14 @@ import { ThemedView } from "@/components/themed-view";
 import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useNodes } from "@/hooks/use-nodes";
+import { nodeService } from "@/lib/node-service";
+import type { StoredNode } from "@/lib/storage-service";
 import {
-  mockNodes,
   formatRelativeTime,
   getNodeTypeIcon,
   getStatusColor,
-  getBatteryColor,
   getSignalStrength,
-  type Node,
 } from "@/constants/mock-data";
 
 export default function NodesScreen() {
@@ -31,23 +32,27 @@ export default function NodesScreen() {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => setRefreshing(false), 1000);
-  };
+  // Nodes hook
+  const [nodesState, nodesActions] = useNodes();
 
-  const handleNodePress = (node: Node) => {
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await nodesActions.refreshNodes();
+    setRefreshing(false);
+  }, [nodesActions]);
+
+  const handleNodePress = (node: StoredNode) => {
     router.push({
       pathname: "/node-detail" as any,
       params: { nodeHash: node.nodeHash },
     });
   };
 
-  const renderNode = ({ item }: { item: Node }) => {
+  // Memoize node item render function
+  const renderNode = useCallback(({ item }: { item: StoredNode }) => {
     const statusColor = getStatusColor(item.isOnline);
-    const batteryColor = getBatteryColor(item.batteryLevel);
-    const signalStrength = getSignalStrength(item.rssi);
+    const batteryColor = item.batteryLevel ? nodeService.getBatteryColor(item.batteryLevel) : colors.textSecondary;
+    const signalStrength = item.rssi ? getSignalStrength(item.rssi) : 'N/A';
     
     return (
       <Pressable
@@ -112,7 +117,7 @@ export default function NodesScreen() {
             {/* Last Seen */}
             <View style={styles.metric}>
               <ThemedText style={[styles.metricText, { color: colors.textSecondary }]}>
-                {item.isOnline ? "Online" : formatRelativeTime(item.lastSeen)}
+                {item.isOnline ? "Online" : formatRelativeTime(new Date(item.lastSeen))}
               </ThemedText>
             </View>
           </View>
@@ -122,7 +127,10 @@ export default function NodesScreen() {
         <IconSymbol name="chevron.right" size={20} color={colors.textSecondary} />
       </Pressable>
     );
-  };
+  }, [colors, handleNodePress]);
+  
+  // Memoized key extractor
+  const keyExtractor = useCallback((item: StoredNode) => item.nodeHash, []);
 
   return (
     <ThemedView style={styles.container}>
@@ -141,19 +149,24 @@ export default function NodesScreen() {
         <ThemedText type="title">Nodes</ThemedText>
         <View style={styles.headerStats}>
           <ThemedText style={[styles.statsText, { color: colors.success }]}>
-            {mockNodes.filter((n) => n.isOnline).length} online
+            {nodesState.onlineCount} online
           </ThemedText>
           <ThemedText style={[styles.statsText, { color: colors.textSecondary }]}>
-            {mockNodes.length} total
+            {nodesState.nodes.length} total
           </ThemedText>
         </View>
       </View>
 
       {/* Nodes List */}
       <FlatList
-        data={mockNodes}
+        data={nodesState.nodes}
         renderItem={renderNode}
-        keyExtractor={(item) => item.nodeHash}
+        keyExtractor={keyExtractor}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={5}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshControl={
@@ -161,22 +174,32 @@ export default function NodesScreen() {
             refreshing={refreshing}
             onRefresh={handleRefresh}
             tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <IconSymbol
-              name="antenna.radiowaves.left.and.right"
-              size={64}
-              color={colors.textSecondary}
-            />
-            <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No nodes discovered
-            </ThemedText>
-            <ThemedText style={[styles.emptySubtext, { color: colors.textDisabled }]}>
-              Nodes will appear here when they join the network
-            </ThemedText>
-          </View>
+          nodesState.isLoading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <ThemedText style={[styles.emptySubtext, { color: colors.textSecondary, marginTop: Spacing.lg }]}>
+                Loading nodes...
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <IconSymbol
+                name="antenna.radiowaves.left.and.right"
+                size={64}
+                color={colors.textSecondary}
+              />
+              <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No nodes discovered
+              </ThemedText>
+              <ThemedText style={[styles.emptySubtext, { color: colors.textDisabled }]}>
+                Nodes will appear here when they join the network
+              </ThemedText>
+            </View>
+          )
         }
       />
     </ThemedView>

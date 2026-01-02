@@ -26,10 +26,7 @@ import { ThemedView } from "@/components/themed-view";
 import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import {
-  mockNodes,
-  type Node,
-} from "@/constants/mock-data";
+import { useNodes } from "@/hooks/use-nodes";
 
 export default function MapScreen() {
   const colorScheme = useColorScheme();
@@ -37,8 +34,13 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const [mapReady, setMapReady] = useState(false);
 
+  // Get nodes from hook
+  const [nodesState] = useNodes();
+
   // Filter nodes with location data
-  const nodesWithLocation = mockNodes.filter((n) => n.latitude && n.longitude);
+  const nodesWithLocation = useMemo(() => {
+    return nodesState.nodes.filter((n) => n.latitude !== undefined && n.longitude !== undefined);
+  }, [nodesState.nodes]);
 
   // Calculate initial region to show all nodes
   const initialRegion = useMemo<Region>(() => {
@@ -148,8 +150,8 @@ export default function MapScreen() {
               nodes={nodesWithLocation.map((node) => ({
                 nodeHash: node.nodeHash,
                 name: node.name,
-                latitude: node.latitude!,
-                longitude: node.longitude!,
+                latitude: node.latitude as number,
+                longitude: node.longitude as number,
                 nodeType: node.nodeType,
                 isOnline: node.isOnline,
               }))}

@@ -1,9 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useState, useEffect } from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -12,12 +14,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useNodes } from "@/hooks/use-nodes";
+import { nodeService } from "@/lib/node-service";
+import type { StoredNode } from "@/lib/storage-service";
 import {
-  mockNodes,
   formatRelativeTime,
   getNodeTypeIcon,
   getStatusColor,
-  getBatteryColor,
   getSignalStrength,
 } from "@/constants/mock-data";
 
@@ -27,19 +30,48 @@ export default function NodeDetailScreen() {
   const insets = useSafeAreaInsets();
   const { nodeHash } = useLocalSearchParams<{ nodeHash: string }>();
   
-  const node = mockNodes.find((n) => n.nodeHash === nodeHash);
+  const [nodesState, nodesActions] = useNodes();
+  const [node, setNode] = useState<StoredNode | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load node data
+  useEffect(() => {
+    loadNode();
+  }, [nodeHash]);
+
+  const loadNode = async () => {
+    setIsLoading(true);
+    const nodeData = await nodesActions.getNode(nodeHash);
+    setNode(nodeData);
+    setIsLoading(false);
+  };
+
+  if (isLoading) {
+    return (
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <ThemedText style={{ marginTop: Spacing.lg, color: colors.textSecondary }}>
+          Loading node details...
+        </ThemedText>
+      </ThemedView>
+    );
+  }
 
   if (!node) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText>Node not found</ThemedText>
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <IconSymbol name="exclamationmark.triangle" size={64} color={colors.textSecondary} />
+        <ThemedText style={{ marginTop: Spacing.lg }}>Node not found</ThemedText>
+        <Pressable onPress={() => router.back()} style={{ marginTop: Spacing.lg }}>
+          <ThemedText style={{ color: colors.primary }}>Go Back</ThemedText>
+        </Pressable>
       </ThemedView>
     );
   }
 
   const statusColor = getStatusColor(node.isOnline);
-  const batteryColor = getBatteryColor(node.batteryLevel);
-  const signalStrength = getSignalStrength(node.rssi);
+  const batteryColor = node.batteryLevel ? nodeService.getBatteryColor(node.batteryLevel) : colors.textSecondary;
+  const signalStrength = node.rssi ? getSignalStrength(node.rssi) : 'N/A';
 
   return (
     <ThemedView style={styles.container}>
@@ -150,14 +182,49 @@ export default function NodeDetailScreen() {
                 <ThemedText style={styles.metricLabelText}>Last Seen</ThemedText>
               </View>
               <ThemedText type="defaultSemiBold">
-                {node.isOnline ? "Now" : formatRelativeTime(node.lastSeen)}
+                {node.isOnline ? "Now" : formatRelativeTime(new Date(node.lastSeen))}
               </ThemedText>
             </View>
           </View>
         </View>
 
+        {/* Hardware Info Section */}
+        {(node.hardwareModel || node.firmwareVersion) && (
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Hardware Information
+            </ThemedText>
+            
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              {node.hardwareModel && (
+                <View style={styles.metricRow}>
+                  <View style={styles.metricLabel}>
+                    <IconSymbol name="cpu" size={20} color={colors.textSecondary} />
+                    <ThemedText style={styles.metricLabelText}>Hardware Model</ThemedText>
+                  </View>
+                  <ThemedText type="defaultSemiBold">{node.hardwareModel}</ThemedText>
+                </View>
+              )}
+
+              {node.hardwareModel && node.firmwareVersion && (
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              )}
+
+              {node.firmwareVersion && (
+                <View style={styles.metricRow}>
+                  <View style={styles.metricLabel}>
+                    <IconSymbol name="gear" size={20} color={colors.textSecondary} />
+                    <ThemedText style={styles.metricLabelText}>Firmware Version</ThemedText>
+                  </View>
+                  <ThemedText type="defaultSemiBold">{node.firmwareVersion}</ThemedText>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Location Section */}
-        {node.latitude && node.longitude && (
+        {node.latitude !== undefined && node.longitude !== undefined && (
           <View style={styles.section}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Location
@@ -207,7 +274,10 @@ export default function NodeDetailScreen() {
               onPress={() => {
                 router.push({
                   pathname: "/chat" as any,
-                  params: { nodeHash: node.nodeHash },
+                  params: { 
+                    nodeHash: node.nodeHash,
+                    nodeName: node.name 
+                  },
                 });
               }}
             >
@@ -241,6 +311,10 @@ export default function NodeDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: "row",

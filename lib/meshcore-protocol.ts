@@ -14,6 +14,10 @@ export enum PacketType {
   ACK = 0x05,
   PING = 0x06,
   PONG = 0x07,
+  FILE_START = 0x10,
+  FILE_CHUNK = 0x11,
+  FILE_END = 0x12,
+  FILE_ACK = 0x13,
 }
 
 // Packet structure

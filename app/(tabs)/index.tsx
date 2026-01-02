@@ -1,11 +1,13 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   FlatList,
   Pressable,
   StyleSheet,
   View,
   Text,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,28 +17,41 @@ import { ThemedView } from "@/components/themed-view";
 import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import {
-  mockConversations,
-  formatRelativeTime,
-  getStatusColor,
-  type Conversation,
-} from "@/constants/mock-data";
+import { useMessages } from "@/hooks/use-messages";
+import { formatRelativeTime, getStatusColor } from "@/constants/mock-data";
+import type { Conversation } from "@/lib/storage-service";
 
 export default function MessagesScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "dark"];
   const insets = useSafeAreaInsets();
   const [selectedChannel, setSelectedChannel] = useState("LongFast");
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Messages hook
+  const [messagesState, messagesActions] = useMessages();
 
   const handleConversationPress = (conversation: Conversation) => {
     router.push({
       pathname: "/chat" as any,
-      params: { nodeHash: conversation.node.nodeHash },
+      params: { 
+        nodeHash: conversation.nodeHash,
+        nodeName: conversation.nodeName 
+      },
     });
   };
 
-  const renderConversation = ({ item }: { item: Conversation }) => {
-    const statusColor = getStatusColor(item.node.isOnline);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await messagesActions.refreshConversations();
+    setRefreshing(false);
+  }, [messagesActions]);
+
+  // Memoize conversation item render function
+  const renderConversation = useCallback(({ item }: { item: Conversation }) => {
+    // Determine online status from last message timestamp (within 5 minutes = online)
+    const isOnline = (Date.now() - item.lastUpdated) < 5 * 60 * 1000;
+    const statusColor = getStatusColor(isOnline);
     
     return (
       <Pressable
@@ -50,7 +65,7 @@ export default function MessagesScreen() {
         {/* Avatar */}
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
           <ThemedText style={styles.avatarText}>
-            {item.node.name.charAt(0).toUpperCase()}
+            {item.nodeName.charAt(0).toUpperCase()}
           </ThemedText>
           {/* Online status indicator */}
           <View
@@ -65,10 +80,10 @@ export default function MessagesScreen() {
         <View style={styles.conversationContent}>
           <View style={styles.conversationHeader}>
             <ThemedText type="defaultSemiBold" style={styles.nodeName}>
-              {item.node.name}
+              {item.nodeName}
             </ThemedText>
             <ThemedText style={[styles.timestamp, { color: colors.textSecondary }]}>
-              {formatRelativeTime(item.lastMessage.timestamp)}
+              {formatRelativeTime(new Date(item.lastMessage.timestamp))}
             </ThemedText>
           </View>
           
@@ -77,6 +92,7 @@ export default function MessagesScreen() {
               numberOfLines={1}
               style={[styles.messagePreview, { color: colors.textSecondary }]}
             >
+              {item.lastMessage.isOutgoing && "You: "}
               {item.lastMessage.content}
             </ThemedText>
             {item.unreadCount > 0 && (
@@ -88,7 +104,10 @@ export default function MessagesScreen() {
         </View>
       </Pressable>
     );
-  };
+  }, [colors, handleConversationPress]);
+  
+  // Memoized key extractor
+  const keyExtractor = useCallback((item: Conversation) => item.nodeHash, []);
 
    return (
     <ThemedView style={styles.container}>
@@ -120,21 +139,43 @@ export default function MessagesScreen() {
 
       {/* Conversations List */}
       <FlatList
-        data={mockConversations}
+        data={messagesState.conversations}
         renderItem={renderConversation}
-        keyExtractor={(item) => item.node.nodeHash}
+        keyExtractor={keyExtractor}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={5}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <IconSymbol name="message.fill" size={64} color={colors.textSecondary} />
-            <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No conversations yet
-            </ThemedText>
-            <ThemedText style={[styles.emptySubtext, { color: colors.textDisabled }]}>
-              Messages will appear here when you start chatting
-            </ThemedText>
-          </View>
+          messagesState.isLoading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <ThemedText style={[styles.emptySubtext, { color: colors.textSecondary, marginTop: Spacing.lg }]}>
+                Loading conversations...
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <IconSymbol name="message.fill" size={64} color={colors.textSecondary} />
+              <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No conversations yet
+              </ThemedText>
+              <ThemedText style={[styles.emptySubtext, { color: colors.textDisabled }]}>
+                Messages will appear here when you start chatting
+              </ThemedText>
+            </View>
+          )
         }
       />
 

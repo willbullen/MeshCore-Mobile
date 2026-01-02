@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -16,7 +16,11 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBluetooth } from "@/hooks/use-bluetooth";
-import { mockNodes, mockMessages, formatRelativeTime } from "@/constants/mock-data";
+import { useNodes } from "@/hooks/use-nodes";
+import { useMessages } from "@/hooks/use-messages";
+import { storageService } from "@/lib/storage-service";
+import type { StoredMessage } from "@/lib/storage-service";
+import { formatRelativeTime } from "@/constants/mock-data";
 
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
@@ -25,21 +29,43 @@ export default function DashboardScreen() {
   const router = useRouter();
   const [bluetoothState] = useBluetooth();
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Get data from hooks
+  const [nodesState, nodesActions] = useNodes();
+  const [messagesState, messagesActions] = useMessages();
+  
+  // Get recent messages
+  const [recentMessages, setRecentMessages] = useState<StoredMessage[]>([]);
+  
+  useEffect(() => {
+    loadRecentMessages();
+  }, [messagesState.conversations]);
+  
+  const loadRecentMessages = async () => {
+    const allMessages = await storageService.getAllMessages();
+    const recent = allMessages.slice(0, 5);
+    setRecentMessages(recent);
+  };
 
   // Calculate metrics
-  const onlineNodes = mockNodes.filter((n) => n.isOnline).length;
-  const totalNodes = mockNodes.length;
-  const recentMessages = mockMessages.slice(0, 5);
-  const avgBattery = Math.round(
-    mockNodes.reduce((sum, n) => sum + (n.batteryLevel || 0), 0) / mockNodes.length
-  );
-  const networkHealth = onlineNodes / totalNodes;
+  const onlineNodes = nodesState.onlineCount;
+  const totalNodes = nodesState.nodes.length;
+  const avgBattery = nodesState.averageBattery;
+  const networkHealth = totalNodes > 0 ? onlineNodes / totalNodes : 0;
+  const messagesToday = useMemo(() => {
+    const today = new Date().setHours(0, 0, 0, 0);
+    return recentMessages.filter(m => m.timestamp >= today).length;
+  }, [recentMessages]);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => setRefreshing(false), 1000);
-  };
+    await Promise.all([
+      nodesActions.refreshNodes(),
+      messagesActions.refreshConversations(),
+    ]);
+    await loadRecentMessages();
+    setRefreshing(false);
+  }, [nodesActions, messagesActions]);
 
   const getHealthColor = () => {
     if (networkHealth >= 0.7) return colors.success;
@@ -129,7 +155,7 @@ export default function DashboardScreen() {
                 Messages Today
               </ThemedText>
               <ThemedText type="defaultSemiBold" style={{ fontSize: 20 }}>
-                {mockMessages.length}
+                {messagesToday}
               </ThemedText>
             </View>
           </View>
@@ -181,51 +207,60 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
 
-          {recentMessages.map((message, index) => (
-            <Pressable
-              key={message.id}
-              style={[
-                styles.activityItem,
-                index < recentMessages.length - 1 && {
-                  borderBottomWidth: 1,
-                  borderBottomColor: colors.border,
-                },
-              ]}
-              onPress={() =>
-                router.push({
-                  pathname: "/chat",
-                  params: { nodeHash: message.sender.nodeHash },
-                })
-              }
-            >
-              <View style={styles.activityLeft}>
-                <View
-                  style={[
-                    styles.activityAvatar,
-                    { backgroundColor: colors.primary + "20" },
-                  ]}
-                >
-                  <ThemedText style={{ color: colors.primary, fontSize: 16 }}>
-                    {message.sender.name.charAt(0)}
-                  </ThemedText>
-                </View>
-                <View style={styles.activityInfo}>
-                  <ThemedText type="defaultSemiBold">
-                    {message.sender.name}
-                  </ThemedText>
-                  <ThemedText
-                    style={{ color: colors.textSecondary, fontSize: 13 }}
-                    numberOfLines={1}
+          {recentMessages.length > 0 ? (
+            recentMessages.map((message, index) => (
+              <Pressable
+                key={message.id}
+                style={[
+                  styles.activityItem,
+                  index < recentMessages.length - 1 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/chat",
+                    params: { 
+                      nodeHash: message.isOutgoing ? message.recipient : message.sender,
+                      nodeName: message.isOutgoing ? message.recipientName : message.senderName
+                    },
+                  })
+                }
+              >
+                <View style={styles.activityLeft}>
+                  <View
+                    style={[
+                      styles.activityAvatar,
+                      { backgroundColor: colors.primary + "20" },
+                    ]}
                   >
-                    {message.content}
-                  </ThemedText>
+                    <ThemedText style={{ color: colors.primary, fontSize: 16 }}>
+                      {(message.isOutgoing ? (message.recipientName || message.recipient) : (message.senderName || message.sender)).charAt(0).toUpperCase()}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.activityInfo}>
+                    <ThemedText type="defaultSemiBold">
+                      {message.isOutgoing ? (message.recipientName || message.recipient.substring(0, 8)) : (message.senderName || message.sender.substring(0, 8))}
+                    </ThemedText>
+                    <ThemedText
+                      style={{ color: colors.textSecondary, fontSize: 13 }}
+                      numberOfLines={1}
+                    >
+                      {message.isOutgoing && "You: "}{message.content}
+                    </ThemedText>
+                  </View>
                 </View>
-              </View>
-              <ThemedText style={{ color: colors.textSecondary, fontSize: 12 }}>
-                {formatRelativeTime(message.timestamp)}
-              </ThemedText>
-            </Pressable>
-          ))}
+                <ThemedText style={{ color: colors.textSecondary, fontSize: 12 }}>
+                  {formatRelativeTime(new Date(message.timestamp))}
+                </ThemedText>
+              </Pressable>
+            ))
+          ) : (
+            <ThemedText style={{ color: colors.textSecondary, textAlign: 'center', paddingVertical: Spacing.md }}>
+              No recent activity
+            </ThemedText>
+          )}
         </ThemedView>
 
         {/* Node Status */}
@@ -241,63 +276,69 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
 
-          {mockNodes.slice(0, 3).map((node, index) => (
-            <Pressable
-              key={node.nodeHash}
-              style={[
-                styles.nodeItem,
-                index < 2 && {
-                  borderBottomWidth: 1,
-                  borderBottomColor: colors.border,
-                },
-              ]}
-              onPress={() =>
-                router.push({
-                  pathname: "/node-detail",
-                  params: { nodeHash: node.nodeHash },
-                })
-              }
-            >
-              <View style={styles.nodeLeft}>
-                <View
-                  style={[
-                    styles.nodeIcon,
-                    { backgroundColor: colors.primary + "20" },
-                  ]}
-                >
-                  <IconSymbol
-                    name="antenna.radiowaves.left.and.right"
-                    size={20}
-                    color={colors.primary}
-                  />
-                </View>
-                <View>
-                  <ThemedText type="defaultSemiBold">{node.name}</ThemedText>
-                  <ThemedText
-                    style={{ color: colors.textSecondary, fontSize: 12 }}
+          {nodesState.nodes.length > 0 ? (
+            nodesState.nodes.slice(0, 3).map((node, index) => (
+              <Pressable
+                key={node.nodeHash}
+                style={[
+                  styles.nodeItem,
+                  index < 2 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/node-detail",
+                    params: { nodeHash: node.nodeHash },
+                  })
+                }
+              >
+                <View style={styles.nodeLeft}>
+                  <View
+                    style={[
+                      styles.nodeIcon,
+                      { backgroundColor: colors.primary + "20" },
+                    ]}
                   >
-                    {node.nodeHash}
+                    <IconSymbol
+                      name="antenna.radiowaves.left.and.right"
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View>
+                    <ThemedText type="defaultSemiBold">{node.name}</ThemedText>
+                    <ThemedText
+                      style={{ color: colors.textSecondary, fontSize: 12 }}
+                    >
+                      {node.nodeHash.substring(0, 12)}...
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.nodeRight}>
+                  <View
+                    style={[
+                      styles.statusDot,
+                      {
+                        backgroundColor:
+                          node.isOnline
+                            ? colors.success
+                            : colors.textSecondary,
+                      },
+                    ]}
+                  />
+                  <ThemedText style={{ fontSize: 12, marginLeft: 4 }}>
+                    {node.batteryLevel || 0}%
                   </ThemedText>
                 </View>
-              </View>
-              <View style={styles.nodeRight}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    {
-                      backgroundColor:
-                        node.isOnline
-                          ? colors.success
-                          : colors.textSecondary,
-                    },
-                  ]}
-                />
-                <ThemedText style={{ fontSize: 12, marginLeft: 4 }}>
-                  {node.batteryLevel || 0}%
-                </ThemedText>
-              </View>
-            </Pressable>
-          ))}
+              </Pressable>
+            ))
+          ) : (
+            <ThemedText style={{ color: colors.textSecondary, textAlign: 'center', paddingVertical: Spacing.md }}>
+              No nodes discovered
+            </ThemedText>
+          )}
         </ThemedView>
       </ScrollView>
     </ThemedView>
