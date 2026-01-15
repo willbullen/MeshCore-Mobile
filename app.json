@@ -28,7 +28,8 @@
         "NSLocationWhenInUseUsageDescription": "Enviroscan needs location access to display node positions on the map.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Enviroscan needs location access to display node positions on the map.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "3"
     },
     "android": {
       "adaptiveIcon": {
@@ -62,7 +63,8 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "versionCode": 2
     },
     "web": {
       "output": "static",
